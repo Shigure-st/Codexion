@@ -1,0 +1,2 @@
+# Codexion
+Codexionプロジェクトは、C言語を用いて並行処理（Concurrency）とリソースの同期（Resource Synchronization）を学ぶためのシミュレーションプロジェクトです。
