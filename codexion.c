@@ -19,6 +19,7 @@ pthread_mutex_t wallet_lock;
 
 void *add_money(void* arg)
 {
+	printf("arg: %d \n", *(int*)arg);
 	for (int i = 0; i < 100000; i++)
 	{
 		pthread_mutex_lock(&wallet_lock);
@@ -29,14 +30,19 @@ void *add_money(void* arg)
 }
 int	main()
 {
-	pthread_t	t1, t2;
+	pthread_t	t1, t2, t3;
 	pthread_mutex_init(&wallet_lock, NULL);
+	int t1_value = 100;
+	int t2_value = 300;
+	int t3_value = 400;
 
-	pthread_create(&t1, NULL, add_money, NULL);
-	pthread_create(&t2, NULL, add_money, NULL);
+	pthread_create(&t1, NULL, add_money, (void*)&t1_value);
+	pthread_create(&t2, NULL, add_money, (void*)&t2_value);
+	pthread_create(&t3, NULL, add_money, (void*)&t3_value);
 
 	pthread_join(t1, NULL);
 	pthread_join(t2, NULL);
+	pthread_join(t3, NULL);
 
 	pthread_mutex_destroy(&wallet_lock);
 	printf("[FIX]finall wallet in: %d yen\n", wallet);
