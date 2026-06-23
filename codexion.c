@@ -14,32 +14,27 @@
 #include <unistd.h>
 #include <pthread.h>
 
-void *sub_worker(void* arg)
+int wallet = 0;
+
+void *add_money(void* arg)
 {
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < 100000; i++)
 	{
-		printf("[sub]work! (%d)\n", i + i);
-		usleep(500000);
+		wallet++;
 	}
-	printf("[sub]finish\n");
 	return NULL;
 }
 int	main()
 {
-	pthread_t	thread_id;
+	pthread_t	t1, t2;
 	printf("[main]employ sub_thread... \n");
 
-	pthread_create(&thread_id, NULL, sub_worker, NULL);
+	pthread_create(&t1, NULL, add_money, NULL);
+	pthread_create(&t2, NULL, add_money, NULL);
 
-	for (int i = 0; i < 3; i++)
-	{
-		printf("[main] other work...(%d)\n", i + 1);
-		usleep(700000);
-	}
+	pthread_join(t1, NULL);
+	pthread_join(t2, NULL);
 
-	printf("[main] wait sub_thread...\n");
-
-	pthread_join(thread_id, NULL);
-	printf("[main]all process complete!\n");
+	printf("finall wallet in: %d yen\n", wallet);
 	return (0);
 }
