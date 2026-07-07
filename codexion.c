@@ -13,10 +13,31 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <stdbool.h>
 
-int ramen_ready = 0;
-pthread_mutex_t kitchen_lock;
-pthread_cond_t ramen_cond;
+typedef struct s_SharedContext
+{
+	int			number_of_coders;
+	int			time_to_debug;
+	int			time_to_refactor;
+	int			time_to_compile;
+	bool		is_active;
+	t_dongle	*dongle_array;
+	t_coder		*coder_array;
+}	t_SharedContext;
+
+typedef struct s_Dongle
+{
+	pthread_mutex_t dongle_lock;
+}	t_Dongle
+
+typedef struct s_Coder
+{
+	int				number;
+	struct s_Dongle	*right_hand_dongle;
+	struct s_Dongle	*left_hand_dongle;
+	struct s_SharedContext	*shared_ctx;
+}	t_Coder;
 
 void *customer(void* arg)
 {
@@ -48,6 +69,7 @@ void *chef(void* arg)
 }
 int	main()
 {
+	struct s_SharedContext shared_ctx
 	pthread_t	t_chef, t_customer1, t_customer2;
 
 	pthread_mutex_init(&kitchen_lock, NULL);
