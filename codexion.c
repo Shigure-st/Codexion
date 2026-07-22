@@ -32,14 +32,16 @@ struct s_SharedContext
 
 struct s_Dongle
 {
+	int				i;
 	pthread_mutex_t dongle_lock;
+	bool			available;
 };
 
 struct s_Coder
 {
 	int				number;
-	struct s_Dongle	right_hand_dongle;
-	struct s_Dongle	left_hand_dongle;
+	struct s_Dongle	*right_hand_dongle;
+	struct s_Dongle	*left_hand_dongle;
 	struct s_SharedContext	*shared_ctx;
 };
 
@@ -72,37 +74,51 @@ struct s_Coder
 // 	return NULL;
 // }
 //
-void	is_debug(void)
+void	is_debug(int	number)
 {
-  usleep(3000);
-	printf("Now Debug....\n");
+	usleep(3000);
+	printf("Coder %d:Now Debug....\n", number);
 }
 
-void	is_refactor(void)
+void	is_refactor(int	number)
 {
-  usleep(3000);
-	printf("Now Refactoring....\n");
+	usleep(3000);
+	printf("Coder %d:Now Refactoring....\n", number);
 }
 
-void	is_compile(t_Dongle right_hand_dongle, t_Dongle left_hand_dongle, int number)
+void	is_compile(t_Dongle *right_hand_dongle, t_Dongle *left_hand_dongle, int number)
 {
-  pthread_mutex_lock(&right_hand_dongle.dongle_lock);
-  pthread_mutex_lock(&left_hand_dongle.dongle_lock);
-  printf("Coder Number:%d", number);
-  usleep(10000);
-  printf("Now Compile....\n");
- 	pthread_mutex_unlock(&right_hand_dongle.dongle_lock);
- 	pthread_mutex_unlock(&left_hand_dongle.dongle_lock);
-  is_debug();
-  is_refactor();
+	while(1)
+	{
+		if (right_hand_dongle->available && left_hand_dongle)
+		{
+			pthread_mutex_lock(&(right_hand_dongle->dongle_lock));
+			pthread_mutex_lock(&(left_hand_dongle->dongle_lock));
+			(right_hand_dongle->available) = false;
+			(left_hand_dongle->available) = false;
+			printf("Coder Number:%d\n", number);
+			printf("Coder %d, RightHandDongle:%p\n", number, (void *)&right_hand_dongle->dongle_lock);
+			printf("Coder %d, LeftHandDongle:%p\n", number, (void *)&left_hand_dongle->dongle_lock);
+			printf("Coder %d:Now Compile....\n", number);
+			pthread_mutex_unlock(&right_hand_dongle->dongle_lock);
+			pthread_mutex_unlock(&left_hand_dongle->dongle_lock);
+			(right_hand_dongle->available) = true;
+			(left_hand_dongle->available) = true;
+			usleep(10000);
+			is_debug(number);
+			is_refactor(number);
+		}
+	}
 
 }
 
 
 void	*simulate(void* arg)
 {
-	printf("Coder Number:%d\n", ((struct s_Coder *)arg)->number);
-	is_compile(((struct s_Coder *)arg)->right_hand_dongle, ((struct s_Coder *)arg)->right_hand_dongle, ((struct s_Coder *)arg)->number);
+	// printf("Coder Number:%d\n", ((struct s_Coder *)arg)->number);
+	struct s_Coder	*arg_st;
+	arg_st = arg;
+	is_compile(arg_st->right_hand_dongle, arg_st->left_hand_dongle, arg_st->number);
 	// is_debug();
 	// is_refactor();
 
@@ -115,8 +131,8 @@ int	main()
 	struct s_Dongle dongle_array[2];
 	struct s_Coder coder_array[2];
 
-  pthread_mutex_init(&dongle_array[0].dongle_lock, NULL);
-  pthread_mutex_init(&dongle_array[1].dongle_lock, NULL);
+	pthread_mutex_init(&dongle_array[0].dongle_lock, NULL);
+	pthread_mutex_init(&dongle_array[1].dongle_lock, NULL);
 
 	shared_ctx.number_of_coders = 2;
 	shared_ctx.time_to_debug = 200;
@@ -124,14 +140,17 @@ int	main()
 	shared_ctx.time_to_compile = 200;
 	shared_ctx.is_active = true;
 
+	dongle_array[0].available = true;
+	dongle_array[1].available = true;
+
 	coder_array[0].number = 1;
-	coder_array[0].left_hand_dongle = dongle_array[0];
-	coder_array[0].right_hand_dongle = dongle_array[1];
+	coder_array[0].left_hand_dongle = &dongle_array[0];
+	coder_array[0].right_hand_dongle = &dongle_array[1];
 	coder_array[0].shared_ctx = &shared_ctx;
 
 	coder_array[1].number = 2;
-	coder_array[1].right_hand_dongle = dongle_array[0];
-	coder_array[1].left_hand_dongle = dongle_array[1];
+	coder_array[1].right_hand_dongle = &dongle_array[0];
+	coder_array[1].left_hand_dongle = &dongle_array[1];
 	coder_array[1].shared_ctx = &shared_ctx;
 
 	// printf("Nnmber_of_coders:%d\n", shared_ctx.number_of_coders);
