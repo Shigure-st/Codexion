@@ -18,6 +18,7 @@
 typedef struct s_SharedContext t_SharedContext;
 typedef struct s_Coder t_Coder;
 typedef struct s_Dongle t_Dongle;
+typedef struct s_Monitor t_Monitor;
 
 struct s_SharedContext
 {
@@ -42,7 +43,13 @@ struct s_Coder
 	int				number;
 	struct s_Dongle	*right_hand_dongle;
 	struct s_Dongle	*left_hand_dongle;
+  struct s_Monitor *monitor_thread;
 	struct s_SharedContext	*shared_ctx;
+};
+
+struct s_Monitor
+{
+  pthread_mutex_t request_mutex;
 };
 
 // void *customer(void* arg)
@@ -90,7 +97,7 @@ void	is_compile(t_Dongle *right_hand_dongle, t_Dongle *left_hand_dongle, int num
 {
 	while(1)
 	{
-		if (right_hand_dongle->available && left_hand_dongle)
+		if (right_hand_dongle->available && left_hand_dongle->available)
 		{
 			pthread_mutex_lock(&(right_hand_dongle->dongle_lock));
 			pthread_mutex_lock(&(left_hand_dongle->dongle_lock));
@@ -112,12 +119,21 @@ void	is_compile(t_Dongle *right_hand_dongle, t_Dongle *left_hand_dongle, int num
 
 }
 
+void  *receive_from_coder(void* arg)
+{
+
+}
+
 
 void	*simulate(void* arg)
 {
 	// printf("Coder Number:%d\n", ((struct s_Coder *)arg)->number);
-	struct s_Coder	*arg_st;
-	arg_st = arg;
+	struct s_Coder	*coder;
+	coder = arg;
+  while(1)
+  {
+    pthread_mutex_lock(&(coder->monitor_thread->request_mutex));
+  }
 	is_compile(arg_st->right_hand_dongle, arg_st->left_hand_dongle, arg_st->number);
 	// is_debug();
 	// is_refactor();
@@ -130,9 +146,11 @@ int	main()
 	struct s_SharedContext shared_ctx;
 	struct s_Dongle dongle_array[2];
 	struct s_Coder coder_array[2];
+  struct s_Monitor monitor_thread;
 
 	pthread_mutex_init(&dongle_array[0].dongle_lock, NULL);
 	pthread_mutex_init(&dongle_array[1].dongle_lock, NULL);
+  pthread_mutex_init(&monitor_thread.request_mutex, NULL);
 
 	shared_ctx.number_of_coders = 2;
 	shared_ctx.time_to_debug = 200;
@@ -160,12 +178,15 @@ int	main()
 
 	pthread_t	t_coder1;
 	pthread_t	t_coder2;
+  pthread_t t_monitor;
 
 	pthread_create(&t_coder1, NULL, simulate, &coder_array[0]);
 	pthread_create(&t_coder2, NULL, simulate, &coder_array[1]);
+  pthread_create(&t_monitor, NULL, receive_from_coder, &monitor_thread);
 
 	pthread_join(t_coder1, NULL);
 	pthread_join(t_coder2, NULL);
+  pthread_join(t_monitor, NULL);
 	// pthread_t	t_chef, t_customer1, t_customer2;
 	//
 	// pthread_mutex_init(&kitchen_lock, NULL);
