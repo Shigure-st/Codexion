@@ -19,16 +19,42 @@ typedef struct s_SharedContext t_SharedContext;
 typedef struct s_Coder t_Coder;
 typedef struct s_Dongle t_Dongle;
 typedef struct s_Monitor t_Monitor;
+typedef struct s_Boss t_Boss;
+typedef struct s_Data t_Data;
+typedef struct s_Queue t_Queue;
+
+struct s_Queue
+{
+  struct s_Data *arr;
+  int           tail;
+  int           head;
+  int           size;
+};
+
+struct s_Data
+{
+  struct s_Coder  *coder;
+  int  priority;
+};
+
+struct s_Boss
+{
+  struct s_Queue  *queue;
+  pthread_mutex_t request_mutex;
+  bool            request_flag;
+	struct s_SharedContext	*shared_ctx;
+};
 
 struct s_SharedContext
 {
-	int			number_of_coders;
-	int			time_to_debug;
-	int			time_to_refactor;
-	int			time_to_compile;
-	bool		is_active;
+  int			number_of_coders;
+  int			time_to_debug;
+  int			time_to_refactor;
+  int			time_to_compile;
+  bool		is_active;
 	t_Dongle	*dongle_array;
 	t_Coder		*coder_array;
+  pthread_cond_t  cond;
 };
 
 struct s_Dongle
@@ -41,10 +67,13 @@ struct s_Dongle
 struct s_Coder
 {
 	int				number;
+  struct s_Queue  *queue;
 	struct s_Dongle	*right_hand_dongle;
 	struct s_Dongle	*left_hand_dongle;
   struct s_Monitor *monitor_thread;
+  struct s_Boss *boss_thread;
 	struct s_SharedContext	*shared_ctx;
+	bool			is_compile;
 };
 
 struct s_Monitor
@@ -52,35 +81,45 @@ struct s_Monitor
   pthread_mutex_t request_mutex;
 };
 
-// void *customer(void* arg)
-// {
-// 	char	*name = (char*)arg;
-//
-// 	pthread_mutex_lock(&kitchen_lock);
-// 	while (ramen_ready == 0)
-// 	{
-// 		printf("[%s] waiting for ramen... \n", name);
-// 		// pthread_cond_wait(&ramen_cond, &kitchen_lock);
-// 	}
-// 	printf("[%s] oh, coming ramen\n", name);
-//
-// 	pthread_mutex_unlock(&kitchen_lock);
-// 	return NULL;
-// }
-//
-// void *chef(void* arg)
-// {
-// 	printf("[staff] I start to make ramen....\n");
-// 	sleep(5);
-//
-// 	pthread_mutex_lock(&kitchen_lock);
-// 	ramen_ready = 1;
-// 	printf("[staff] welcome ramen\n");
-// 	pthread_cond_broadcast(&ramen_cond);
-// 	pthread_mutex_unlock(&kitchen_lock);
-// 	return NULL;
-// }
-//
+bool  is_queue_empty(t_Queue *queue)
+{
+  if((queue->tail + 1) % queue->size == queue->head)
+    return true;
+  else
+    return false;
+}
+
+void  enqueue(t_Queue *queue, t_Coder *element)
+{
+  if((queue->tail + 2) % (queue->size) == queue->head)
+  {
+    printf("Queue is full so can't ENQUEUE\n");
+    return;
+
+  }
+  queue->arr[(queue->tail + 1) % queue->size].coder = element;
+  queue->tail = (queue->tail + 1) % queue->size;
+  // printf("[DEBUG]heap queue:%d\n", queue->arr[(queue->tail) % queue->size].coder);
+  // printf("[DEBUG]tail:%d\n", queue->tail);
+}
+
+void  *dequeue(t_Queue *queue)
+{
+  struct s_Coder *ret;
+
+  // printf("[DEBUG]\n");
+  // printf("tail:%d\n", queue->tail);
+  if((queue->tail + 1) % queue->size == queue->head)
+  {
+    printf("Queue is empty\n");
+    return NULL;
+  }
+  ret = queue->arr[queue->head].coder;
+  queue->head = (queue->head + 1) % queue->size;
+  return ret;
+
+}
+
 void	is_debug(int	number)
 {
 	usleep(3000);
@@ -93,35 +132,53 @@ void	is_refactor(int	number)
 	printf("Coder %d:Now Refactoring....\n", number);
 }
 
-void	is_compile(t_Dongle *right_hand_dongle, t_Dongle *left_hand_dongle, int number)
+void	is_compile(t_Coder *coder)
 {
-	while(1)
-	{
-		if (right_hand_dongle->available && left_hand_dongle->available)
-		{
-			pthread_mutex_lock(&(right_hand_dongle->dongle_lock));
-			pthread_mutex_lock(&(left_hand_dongle->dongle_lock));
-			(right_hand_dongle->available) = false;
-			(left_hand_dongle->available) = false;
-			printf("Coder Number:%d\n", number);
-			printf("Coder %d, RightHandDongle:%p\n", number, (void *)&right_hand_dongle->dongle_lock);
-			printf("Coder %d, LeftHandDongle:%p\n", number, (void *)&left_hand_dongle->dongle_lock);
-			printf("Coder %d:Now Compile....\n", number);
-			pthread_mutex_unlock(&right_hand_dongle->dongle_lock);
-			pthread_mutex_unlock(&left_hand_dongle->dongle_lock);
-			(right_hand_dongle->available) = true;
-			(left_hand_dongle->available) = true;
-			usleep(10000);
-			is_debug(number);
-			is_refactor(number);
-		}
-	}
+  // if (coder->right_hand_dongle->available && coder->left_hand_dongle->available)
+  // {
+  pthread_mutex_lock(&(coder->right_hand_dongle->dongle_lock));
+  pthread_mutex_lock(&(coder->left_hand_dongle->dongle_lock));
+  printf("Coder Number:%d\n", coder->number);
+  printf("Coder %d, RightHandDongle:%p\n", coder->number, (void *)&coder->right_hand_dongle->dongle_lock);
+  printf("Coder %d, LeftHandDongle:%p\n", coder->number, (void *)&coder->left_hand_dongle->dongle_lock);
+  printf("Coder %d:Now Compile....\n", coder->number);
+  pthread_mutex_unlock(&coder->right_hand_dongle->dongle_lock);
+  pthread_mutex_unlock(&coder->left_hand_dongle->dongle_lock);
+  pthread_mutex_lock(&(coder->boss_thread->request_mutex));
+  (coder->right_hand_dongle->available) = true;
+  (coder->left_hand_dongle->available) = true;
+  pthread_mutex_unlock(&(coder->boss_thread->request_mutex));
+  usleep(10000);
+  is_debug(coder->number);
+  is_refactor(coder->number);
+  // }
 
 }
 
 void  *receive_from_coder(void* arg)
 {
-
+	struct s_Boss	*boss;
+  struct s_Coder *coder;
+	boss = arg;
+    while(1)
+  {
+      if(!is_queue_empty(boss->queue))
+      {
+        pthread_mutex_lock(&(boss->request_mutex));
+        coder = dequeue(boss->queue);
+        if (coder && coder->left_hand_dongle->available && coder->right_hand_dongle->available)
+        {
+          coder->left_hand_dongle->available = false;
+          coder->right_hand_dongle->available = false;
+          coder->is_compile = true;
+          pthread_cond_broadcast(&(boss->shared_ctx->cond));
+        }
+        else if(coder)
+          enqueue(coder->queue, coder);
+        boss->request_flag = false;
+        pthread_mutex_unlock(&(boss->request_mutex));
+      }
+  }
 }
 
 
@@ -132,9 +189,17 @@ void	*simulate(void* arg)
 	coder = arg;
   while(1)
   {
-    pthread_mutex_lock(&(coder->monitor_thread->request_mutex));
+    usleep(1000000);
+    pthread_mutex_lock(&(coder->boss_thread->request_mutex));
+    enqueue(coder->queue, coder);
+    coder->boss_thread->request_flag = true;
+    while(!coder->is_compile)
+      pthread_cond_wait(&(coder->shared_ctx->cond), &(coder->boss_thread->request_mutex));
+    pthread_mutex_unlock(&(coder->boss_thread->request_mutex));
+    coder->is_compile = false;
+    is_compile(coder);
   }
-	is_compile(arg_st->right_hand_dongle, arg_st->left_hand_dongle, arg_st->number);
+    // is_compile(coder);
 	// is_debug();
 	// is_refactor();
 
@@ -144,19 +209,34 @@ void	*simulate(void* arg)
 int	main()
 {
 	struct s_SharedContext shared_ctx;
+  pthread_cond_init(&shared_ctx.cond, NULL);
+
 	struct s_Dongle dongle_array[2];
 	struct s_Coder coder_array[2];
-  struct s_Monitor monitor_thread;
+  struct s_Data dates[3] = {0};
 
-	pthread_mutex_init(&dongle_array[0].dongle_lock, NULL);
-	pthread_mutex_init(&dongle_array[1].dongle_lock, NULL);
-  pthread_mutex_init(&monitor_thread.request_mutex, NULL);
+  struct  s_Queue heap_queue;
+  heap_queue.arr = dates;
+  heap_queue.size = 3;
+  heap_queue.head = 0;
+  heap_queue.tail = -1;
+
 
 	shared_ctx.number_of_coders = 2;
 	shared_ctx.time_to_debug = 200;
 	shared_ctx.time_to_refactor = 200;
 	shared_ctx.time_to_compile = 200;
 	shared_ctx.is_active = true;
+
+  struct s_Boss boss_thread;
+  boss_thread.request_flag = false;
+  boss_thread.queue = &heap_queue;
+  boss_thread.shared_ctx = &shared_ctx;
+
+	pthread_mutex_init(&dongle_array[0].dongle_lock, NULL);
+	pthread_mutex_init(&dongle_array[1].dongle_lock, NULL);
+  pthread_mutex_init(&boss_thread.request_mutex, NULL);
+
 
 	dongle_array[0].available = true;
 	dongle_array[1].available = true;
@@ -165,11 +245,17 @@ int	main()
 	coder_array[0].left_hand_dongle = &dongle_array[0];
 	coder_array[0].right_hand_dongle = &dongle_array[1];
 	coder_array[0].shared_ctx = &shared_ctx;
+	coder_array[0].boss_thread = &boss_thread;
+	coder_array[0].queue = &heap_queue;
+	coder_array[0].is_compile = false;
 
 	coder_array[1].number = 2;
 	coder_array[1].right_hand_dongle = &dongle_array[0];
 	coder_array[1].left_hand_dongle = &dongle_array[1];
 	coder_array[1].shared_ctx = &shared_ctx;
+	coder_array[1].boss_thread = &boss_thread;
+	coder_array[1].queue = &heap_queue;
+	coder_array[1].is_compile = false;
 
 	// printf("Nnmber_of_coders:%d\n", shared_ctx.number_of_coders);
 	// printf("coder_array[0]:number %d, left_hand_dongle %p, right_hand_dongle %p\n", coder_array[0].number, coder_array[0].left_hand_dongle, coder_array[0].right_hand_dongle);
@@ -178,31 +264,14 @@ int	main()
 
 	pthread_t	t_coder1;
 	pthread_t	t_coder2;
-  pthread_t t_monitor;
+  pthread_t t_boss;
 
 	pthread_create(&t_coder1, NULL, simulate, &coder_array[0]);
 	pthread_create(&t_coder2, NULL, simulate, &coder_array[1]);
-  pthread_create(&t_monitor, NULL, receive_from_coder, &monitor_thread);
+  pthread_create(&t_boss, NULL, receive_from_coder, &boss_thread);
 
 	pthread_join(t_coder1, NULL);
 	pthread_join(t_coder2, NULL);
-  pthread_join(t_monitor, NULL);
-	// pthread_t	t_chef, t_customer1, t_customer2;
-	//
-	// pthread_mutex_init(&kitchen_lock, NULL);
-	// pthread_cond_init(&ramen_cond, NULL);
-	//
-	// pthread_create(&t_customer1, NULL, customer, "Kyaku:A");
-	// pthread_create(&t_customer2, NULL, customer, "Kyaku:B");
-	// sleep(1);
-	// pthread_create(&t_chef, NULL, chef, NULL);
-	//
-	// pthread_join(t_customer1, NULL);
-	// pthread_join(t_customer2, NULL);
-	// pthread_join(t_chef, NULL);
-	//
-	// pthread_mutex_destroy(&kitchen_lock);
-	// pthread_cond_destroy(&ramen_cond);
-	// printf("[main]finished sales\n");
+  pthread_join(t_boss, NULL);
 	return (0);
 }
