@@ -194,14 +194,24 @@ void  *receive_from_coder(void* arg)
   {
       // printf("[DEBUG:receive_from_coder]\n");
       pthread_mutex_lock(&(boss->request_mutex));
-      while(is_queue_empty(boss->shared_ctx->queue))
+      while(is_queue_empty(boss->shared_ctx->queue) && !boss->shared_ctx->stop_flag)
         pthread_cond_wait(&(boss->shared_ctx->queue->not_empty), &(boss->request_mutex));
+      if (boss->shared_ctx->stop_flag)
+      {
+        pthread_mutex_unlock(&(boss->request_mutex));
+        break;
+      }
       coder = dequeue(boss->shared_ctx->queue);
       coder->wait_cond = true;
       pthread_cond_broadcast(&(coder->check_compile_cond));
       // while(!coder->is_compile)
-      while(coder->left_dongle->available && coder->right_dongle->available)
+      while(coder->left_dongle->available && coder->right_dongle->available && !boss->shared_ctx->stop_flag)
         pthread_cond_wait(&(coder->shared_ctx->cond), &(coder->boss->request_mutex));
+      if (boss->shared_ctx->stop_flag)
+      {
+        pthread_mutex_unlock(&(boss->request_mutex));
+        break;
+      }
       // printf("[DEBUG:receive_from_coder end]\n");
       // coder->left_hand_dongle->available = false;
       // coder->right_hand_dongle->available = false;
@@ -210,6 +220,7 @@ void  *receive_from_coder(void* arg)
       // pthread_cond_broadcast(&(boss->shared_ctx->cond));
       pthread_mutex_unlock(&(boss->request_mutex));
   }
+  return NULL;
 }
 
 
@@ -224,8 +235,13 @@ void	*simulate(void* arg)
     usleep(1000000);
     pthread_mutex_lock(&(coder->boss->request_mutex));
     enqueue(coder->shared_ctx->queue, coder);
-    while(!coder->wait_cond)
+    while(!coder->wait_cond && !coder->shared_ctx->stop_flag)
       pthread_cond_wait(&(coder->check_compile_cond), &(coder->boss->request_mutex));
+    if (coder->shared_ctx->stop_flag)
+    {
+      pthread_mutex_unlock(&(coder->boss->request_mutex));
+      break;
+    }
     coder->wait_cond = false;
     // pthread_mutex_lock(&(coder->right_hand_dongle->dongle_lock));
     // pthread_mutex_lock(&(coder->left_hand_dongle->dongle_lock));
@@ -235,8 +251,13 @@ void	*simulate(void* arg)
     // coder->is_compile = true;
     // while(!coder->is_compile)
     //   pthread_cond_wait(&(coder->shared_ctx->cond), &(coder->boss_thread->request_mutex));
-    while(!coder->is_compile)
+    while(!coder->is_compile && !coder->shared_ctx->stop_flag)
       pthread_cond_wait(&(coder->check_compile_cond), &(coder->boss->request_mutex));
+    if (coder->shared_ctx->stop_flag)
+    {
+      pthread_mutex_unlock(&(coder->boss->request_mutex));
+      break;
+    }
     pthread_mutex_unlock(&(coder->boss->request_mutex));
     coder->is_compile = false;
     is_compile(coder);
@@ -435,9 +456,23 @@ int init_context(t_Args *args, t_SharedContext *shared_ctx)
   return 1;
 }
 
+void wakeup_all_thread(t_SharedContext *shared_ctx, int coder)
+{
+  int i;
+
+  i = 0;
+  while(i < coder)
+  {
+      pthread_cond_broadcast(&(shared_ctx->coders[i].check_compile_cond));
+      i++;
+  }
+  pthread_cond_broadcast(&(shared_ctx->cond));
+}
+
 int run_simulation(t_SharedContext *shared_ctx)
 {
   int i;
+  int j;
 
   i = 0;
   if (pthread_create(&shared_ctx->boss->t_Boss, NULL, receive_from_coder, shared_ctx->boss) != 0)
@@ -445,16 +480,18 @@ int run_simulation(t_SharedContext *shared_ctx)
   while(i < shared_ctx->coder)
   {
     if (pthread_create(&shared_ctx->coders[i].t_Coder, NULL, simulate, &shared_ctx->coders[i]) != 0)
-      return -1;
+    {
+      shared_ctx->stop_flag = true;
+      wakeup_all_thread(shared_ctx, i);
+      break;
+    }
     i++;
   }
-
+  j = 0;
+  while(j < i)
+    pthread_join(shared_ctx->coders[j++].t_Coder, NULL);
   pthread_join(shared_ctx->boss->t_Boss, NULL);
-  i = 0;
-  while(i < shared_ctx->coder)
-    pthread_join(shared_ctx->coders[i++].t_Coder, NULL);
   return 0;
-
 }
 
 int	main(int argc, char **argv)
