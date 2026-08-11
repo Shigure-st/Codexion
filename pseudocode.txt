@@ -1,0 +1,128 @@
+
+コンパイル関数
+if 左右のドングルがコンパイル可能状態なら
+  右手のドングルをロック
+  右手のドングルをロック
+  ーーコンパイルーー
+  右手のドングルをアンロック
+  右手のドングルをアンロック
+  Bossのrequest_mutexをロック
+  左右のドングルの使用中変数をtrue(未使用)に変更
+  Bossのrequest_mutexをアンロック
+
+ボススレッド
+while(全コーダーのコンパイル回数が終わるorバーンアウトする)
+  request_mutexをロック
+  while キューの中身が空の間
+    queueに追加のシグナルが来るまで睡眠
+  キューからコーダーを取り出す
+  コーダーの待機変数をtrueに変更
+  コーダーにシグナルを送信
+  while コーダーのコンパイル準備ができていない間
+    コーダーからコンパイル可能シグナルが来るまで睡眠
+  コーダーのコンパイル可能状態変数をtrue(コンパイル可能)に変更
+  眠っているコーダーにシグナルを送って起こす
+  request_mutexをアンロック
+
+
+コーダースレッド
+while(1)
+  request_mutexをロック
+  自身をキューに追加
+  while(待機変数がfalseの間)
+    ボスからシグナルが来るまで睡眠
+  待機変数をfalseに変更
+  左右のドングルをコンパイル可能状態に変更する
+  ボスにコンパイル準備完了シグナルを送信
+  while(コンパイル許可がfalseの間)
+    コンパイル出来るようになるまで睡眠
+  ーーBossからシグナルが来て起床ーー
+  コンパイル可能状態変数をfalse(コンパイル不可)に変更
+  request_mutexをアンロック
+  コンパイル関数を呼び出し
+  
+課題
+ボススレッドは用事があるときは眠らせておきたい
+理由：cpuの無駄な使用率を控えるため
+モニタースレッドがqueueに追加後に確認する
+もし取り出したコーダーのドングルが使用中だった場合は、
+再びキューに追加しなおして次コンパイルができる時まで眠る
+
+
+void	is_compile(t_Coder *coder)
+{
+  // if (coder->right_hand_dongle->available && coder->left_hand_dongle->available)
+  // {
+  pthread_mutex_lock(&(coder->right_hand_dongle->dongle_lock));
+  pthread_mutex_lock(&(coder->left_hand_dongle->dongle_lock));
+  printf("Coder Number:%d\n", coder->number);
+  printf("Coder %d, RightHandDongle:%p\n", coder->number, (void *)&coder->right_hand_dongle->dongle_lock);
+  printf("Coder %d, LeftHandDongle:%p\n", coder->number, (void *)&coder->left_hand_dongle->dongle_lock);
+  printf("Coder %d:Now Compile....\n", coder->number);
+  pthread_mutex_unlock(&coder->right_hand_dongle->dongle_lock);
+  pthread_mutex_unlock(&coder->left_hand_dongle->dongle_lock);
+  pthread_mutex_lock(&(coder->boss_thread->request_mutex));
+  (coder->right_hand_dongle->available) = true;
+  (coder->left_hand_dongle->available) = true;
+  pthread_mutex_unlock(&(coder->boss_thread->request_mutex));
+  usleep(10000);
+  is_debug(coder->number);
+  is_refactor(coder->number);
+  // }
+
+}
+  
+
+void  *receive_from_coder(void* arg)
+{
+	struct s_Boss	*boss;
+  struct s_Coder *coder;
+	boss = arg;
+    while(1)
+  {
+      if(!is_queue_empty(boss->queue))
+      {
+        pthread_mutex_lock(&(boss->request_mutex));
+        coder = dequeue(boss->queue);
+        if (coder && coder->left_hand_dongle->available && coder->right_hand_dongle->available)
+        {
+          coder->left_hand_dongle->available = false;
+          coder->right_hand_dongle->available = false;
+          coder->is_compile = true;
+          pthread_cond_broadcast(&(boss->shared_ctx->cond));
+        }
+        else if(coder)
+          enqueue(coder->queue, coder);
+        boss->request_flag = false;
+        pthread_mutex_unlock(&(boss->request_mutex));
+      }
+  }
+}
+
+
+
+void	*simulate(void* arg)
+{
+	// printf("Coder Number:%d\n", ((struct s_Coder *)arg)->number);
+	struct s_Coder	*coder;
+	coder = arg;
+  while(1)
+  {
+    usleep(1000000);
+    pthread_mutex_lock(&(coder->boss_thread->request_mutex));
+    enqueue(coder->queue, coder);
+    coder->boss_thread->request_flag = true;
+    while(!coder->is_compile)
+      pthread_cond_wait(&(coder->shared_ctx->cond), &(coder->boss_thread->request_mutex));
+    pthread_mutex_unlock(&(coder->boss_thread->request_mutex));
+    coder->is_compile = false;
+    is_compile(coder);
+  }
+    // is_compile(coder);
+	// is_debug();
+	// is_refactor();
+
+	return NULL;
+}
+
+
