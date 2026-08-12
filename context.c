@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include "codexion.h"
 
-int init_shared_context(t_Args *args, t_SharedContext *shared_ctx)
+static int init_shared_context(t_Args *args, t_SharedContext *shared_ctx)
 {
 	if(pthread_cond_init(&shared_ctx->cond, NULL) != 0)
       return -1;
@@ -15,6 +15,10 @@ int init_shared_context(t_Args *args, t_SharedContext *shared_ctx)
   shared_ctx->cooldown = args->cooldown;
   shared_ctx->scheduler = args->scheduler;
   shared_ctx->stop_flag = false;
+  shared_ctx->dongles = NULL;
+  shared_ctx->boss = NULL;
+  shared_ctx->coders = NULL;
+  shared_ctx->queue = NULL;
   return 0;
 
   // printf("number_of_coders:%d\n", shared_ctx->coders);
@@ -36,5 +40,5 @@ int init_context(t_Args *args, t_SharedContext *shared_ctx)
      || alloc_coder_array(shared_ctx) != 0
      || alloc_queue(shared_ctx) != 0)
     return -1;
-  return 1;
+  return 0;
 }

@@ -108,7 +108,6 @@ void	*simulate(void* arg);
 int parse_char(char *arg, char **target);
 int parse_int(char *arg, int *target);
 int parse_args(int argc, char **argv, t_Args *args);
-int init_shared_context(t_Args *args, t_SharedContext *shared_ctx);
 int alloc_dongle_array(t_SharedContext *shared_ctx);
 void init_coder_struct(t_SharedContext *shared_ctx, int i);
 int alloc_coder_array(t_SharedContext *shared_ctx);
@@ -118,5 +117,6 @@ int init_context(t_Args *args, t_SharedContext *shared_ctx);
 void wakeup_all_thread(t_SharedContext *shared_ctx, int coder);
 int run_simulation(t_SharedContext *shared_ctx);
 int	main(int argc, char **argv);
+int  cleanup_context(t_SharedContext *shared_ctx);
 
 #endif

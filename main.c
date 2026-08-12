@@ -12,7 +12,7 @@ int	main(int argc, char **argv)
   init_context(&args, &shared_ctx);
   run_simulation(&shared_ctx);
   printf("argc:%d, argv:%s\n", argc, argv[1]);
-  pthread_cond_init(&shared_ctx.cond, NULL);
+  // pthread_cond_init(&shared_ctx.cond, NULL);
 
 	return (0);
 }

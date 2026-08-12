@@ -10,7 +10,7 @@ int alloc_dongle_array(t_SharedContext *shared_ctx)
   i = 0;
   shared_ctx->dongles = malloc(sizeof(t_Dongle) * shared_ctx->coder);
   if(shared_ctx->dongles == NULL)
-    return -1;
+    return (cleanup_context(shared_ctx));
   while(i < shared_ctx->coder)
   {
     shared_ctx->dongles[i].i = i;
@@ -19,12 +19,10 @@ int alloc_dongle_array(t_SharedContext *shared_ctx)
     {
       j = 0;
       while(j < i)
-      {
-        pthread_mutex_destroy(&shared_ctx->dongles[j].dongle_lock);
-        j++;
-      }
+        pthread_mutex_destroy(&shared_ctx->dongles[j++].dongle_lock);
       free(shared_ctx->dongles);
-      return -1;
+      shared_ctx->dongles = NULL;
+      return (cleanup_context(shared_ctx));
     }
     i++;
   }

@@ -10,7 +10,9 @@ SRCS			=  main.c \
 					 dongle.c \
 					 queue.c \
 					 simulate.c \
-					 codexion.c
+					 codexion.c \
+					 cleanup.c
+
 OBJS		=  $(SRCS:.c=.o)
 
 all: $(TARGET)

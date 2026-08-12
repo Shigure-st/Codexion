@@ -48,10 +48,14 @@ int alloc_queue(t_SharedContext *shared_ctx)
 {
   shared_ctx->queue = malloc(sizeof(t_Queue));
   if (shared_ctx->queue == NULL)
-    return -1;
+    return (cleanup_context(shared_ctx));
   shared_ctx->queue->arr = malloc(sizeof(t_Data) * (shared_ctx->coder + 1));
   if (shared_ctx->queue->arr == NULL)
-    return (free(shared_ctx->queue), -1);
+  {
+    free(shared_ctx->queue);
+    shared_ctx->queue = NULL;
+    return (cleanup_context(shared_ctx));
+  }
   shared_ctx->queue->size = shared_ctx->coder + 1;
   shared_ctx->queue->head = 0;
   shared_ctx->queue->tail = -1;
@@ -59,7 +63,8 @@ int alloc_queue(t_SharedContext *shared_ctx)
   {
     free(shared_ctx->queue->arr);
     free(shared_ctx->queue);
-    return -1;
+    shared_ctx->queue = NULL;
+    return (cleanup_context(shared_ctx));
   }
   return 0;
 }

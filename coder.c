@@ -25,7 +25,7 @@ int alloc_coder_array(t_SharedContext *shared_ctx)
   i = 0;
   shared_ctx->coders = malloc(sizeof(t_Coder) * shared_ctx->coder);
   if (shared_ctx->coders == NULL)
-    return -1;
+    return (cleanup_context(shared_ctx));
   while (i < shared_ctx->coder)
   {
 	  if(pthread_cond_init(&shared_ctx->coders[i].check_compile_cond, NULL) != 0)
@@ -37,7 +37,8 @@ int alloc_coder_array(t_SharedContext *shared_ctx)
         j++;
       }
       free(shared_ctx->coders);
-      return -1;
+      shared_ctx->coders = NULL;
+      return (cleanup_context(shared_ctx));
     }
     init_coder_struct(shared_ctx, i);
     i++;
