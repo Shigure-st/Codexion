@@ -43,7 +43,6 @@ struct s_Data
 
 struct s_Boss
 {
-  struct s_Queue  *queue;
 	pthread_t	      t_Boss;
   pthread_mutex_t request_mutex;
   bool            request_flag;
@@ -81,9 +80,9 @@ struct s_Coder
 	int				number;
 	bool			is_compile;
   bool      wait_cond;
+  bool      is_complete;
 	pthread_t	t_Coder;
   pthread_cond_t  check_compile_cond;
-  struct s_Queue  *queue;
 	struct s_Dongle	*right_dongle;
 	struct s_Dongle	*left_dongle;
   struct s_Monitor *monitor_thread;

@@ -9,8 +9,10 @@ int	main(int argc, char **argv)
 
   if (parse_args(argc, argv, &args) != 0)
     return -1;
-  init_context(&args, &shared_ctx);
+  if (init_context(&args, &shared_ctx) != 0)
+    return -1;
   run_simulation(&shared_ctx);
+  cleanup_context(&shared_ctx);
   printf("argc:%d, argv:%s\n", argc, argv[1]);
   // pthread_cond_init(&shared_ctx.cond, NULL);
 

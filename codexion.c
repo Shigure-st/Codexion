@@ -44,6 +44,7 @@ void	is_compile(t_Coder *coder)
   pthread_mutex_lock(&(coder->boss->request_mutex));
   (coder->right_dongle->available) = true;
   (coder->left_dongle->available) = true;
+  pthread_cond_broadcast(&(coder->boss->shared_ctx->cond));
   pthread_mutex_unlock(&(coder->boss->request_mutex));
   usleep(10000);
   is_debug(coder->number);
@@ -52,13 +53,31 @@ void	is_compile(t_Coder *coder)
 
 }
 
+bool  check_complete(t_SharedContext *shared_ctx)
+{
+  int i;
+
+  i = 0;
+  while (i < shared_ctx->coder)
+  {
+    if (!shared_ctx->coders[i].is_complete)
+      return false;
+    printf("[DEBUG check]\n");
+    i++;
+  }
+  pthread_mutex_lock(&(shared_ctx->boss->request_mutex));
+  shared_ctx->stop_flag = true;
+  pthread_mutex_unlock(&(shared_ctx->boss->request_mutex));
+  return true;
+}
+
 void  *receive_from_coder(void* arg)
 {
 	struct s_Boss	*boss;
   struct s_Coder *coder;
 	boss = arg;
   printf("[DEBUG boss]\n");
-  while(1)
+  while(!boss->shared_ctx->stop_flag)
   {
       // printf("[DEBUG:receive_from_coder]\n");
       pthread_mutex_lock(&(boss->request_mutex));
@@ -70,24 +89,28 @@ void  *receive_from_coder(void* arg)
         break;
       }
       coder = dequeue(boss->shared_ctx->queue);
-      coder->wait_cond = true;
-      pthread_cond_broadcast(&(coder->check_compile_cond));
       // while(!coder->is_compile)
-      while(coder->left_dongle->available && coder->right_dongle->available && !boss->shared_ctx->stop_flag)
+      while((!coder->left_dongle->available || !coder->right_dongle->available) && !boss->shared_ctx->stop_flag)
         pthread_cond_wait(&(coder->shared_ctx->cond), &(coder->boss->request_mutex));
       if (boss->shared_ctx->stop_flag)
       {
         pthread_mutex_unlock(&(boss->request_mutex));
         break;
       }
+      coder->left_dongle->available = false;
+      coder->right_dongle->available = false;
+      coder->wait_cond = true;
+      pthread_cond_broadcast(&(coder->check_compile_cond));
       // printf("[DEBUG:receive_from_coder end]\n");
       // coder->left_hand_dongle->available = false;
       // coder->right_hand_dongle->available = false;
-      coder->is_compile = true;
-      pthread_cond_broadcast(&(coder->check_compile_cond));
+      // coder->is_compile = true;
+      // pthread_cond_broadcast(&(coder->check_compile_cond));
       // pthread_cond_broadcast(&(boss->shared_ctx->cond));
       pthread_mutex_unlock(&(boss->request_mutex));
+      printf("[DEBUG boss]\n");
   }
+  printf("[DEBUG boss]\n");
   return NULL;
 }
 
@@ -96,8 +119,10 @@ void	*simulate(void* arg)
 {
 	// printf("Coder Number:%d\n", ((struct s_Coder *)arg)->number);
 	struct s_Coder	*coder;
+  int i;
+  i = 0;
 	coder = arg;
-  while(1)
+  while(i < coder->shared_ctx->required)
   {
     // printf("[DEBUG:simulate]\n");
     usleep(1000000);
@@ -113,27 +138,34 @@ void	*simulate(void* arg)
     coder->wait_cond = false;
     // pthread_mutex_lock(&(coder->right_hand_dongle->dongle_lock));
     // pthread_mutex_lock(&(coder->left_hand_dongle->dongle_lock));
-    coder->left_dongle->available = false;
-    coder->right_dongle->available = false;
-    pthread_cond_broadcast(&(coder->boss->shared_ctx->cond));
+    // coder->left_dongle->available = false;
+    // coder->right_dongle->available = false;
+    // pthread_cond_broadcast(&(coder->boss->shared_ctx->cond));
     // coder->is_compile = true;
     // while(!coder->is_compile)
     //   pthread_cond_wait(&(coder->shared_ctx->cond), &(coder->boss_thread->request_mutex));
-    while(!coder->is_compile && !coder->shared_ctx->stop_flag)
-      pthread_cond_wait(&(coder->check_compile_cond), &(coder->boss->request_mutex));
-    if (coder->shared_ctx->stop_flag)
-    {
-      pthread_mutex_unlock(&(coder->boss->request_mutex));
-      break;
-    }
+    // while(!coder->is_compile && !coder->shared_ctx->stop_flag)
+    //   pthread_cond_wait(&(coder->check_compile_cond), &(coder->boss->request_mutex));
+    // if (coder->shared_ctx->stop_flag)
+    // {
+    //   pthread_mutex_unlock(&(coder->boss->request_mutex));
+    //   break;
+    // }
     pthread_mutex_unlock(&(coder->boss->request_mutex));
-    coder->is_compile = false;
+    // coder->is_compile = false;
     is_compile(coder);
+    printf("Coder:%d compile number:%d\n", coder->number, i);
+
+    i++;
 
     // is_compile(coder);
 	// is_debug();
 	// is_refactor();
   }
+  printf("compile complete\n");
+  coder->is_complete = true;
+  if (check_complete(coder->shared_ctx))
+    pthread_cond_broadcast(&(coder->shared_ctx->queue->not_empty));
 
 	return NULL;
 }

@@ -11,6 +11,7 @@ void init_coder_struct(t_SharedContext *shared_ctx, int i)
   shared_ctx->coders[i].wait_cond = false;
   shared_ctx->coders[i].left_dongle = &shared_ctx->dongles[i];
   shared_ctx->coders[i].boss = shared_ctx->boss;
+  shared_ctx->coders[i].is_complete = false;
   if (i == shared_ctx->coder - 1)
     shared_ctx->coders[i].right_dongle = &shared_ctx->dongles[0];
   else
