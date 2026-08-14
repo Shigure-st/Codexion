@@ -15,26 +15,65 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include "codexion.h"
+#include <time.h>
+#include <sys/time.h>
 
 
-void	is_debug(int	number)
+void	is_debug(t_Coder *coder)
 {
-	usleep(3000);
-	printf("Coder %d:Now Debug....\n", number);
+  long  total_usec;
+  long  remainder_usec;
+  long   time;
+
+  gettimeofday(&coder->tv, NULL);
+  time = coder->tv.tv_sec;
+  total_usec = coder->tv.tv_usec + (coder->shared_ctx->debug * 1000);
+  coder->ts.tv_sec = coder->tv.tv_sec + (total_usec / 1000000);
+  remainder_usec = total_usec % 1000000;
+  coder->ts.tv_nsec = remainder_usec * 1000;
+	printf("Coder %d:Now Debug....\n", coder->number);
+  pthread_cond_timedwait(&coder->check_compile_cond, &coder->local_mutex, &coder->ts);
+  printf("デバックにかかった秒数:%ld\n", ((long)coder->ts.tv_sec - time));
 }
 
-void	is_refactor(int	number)
+void	is_refactor(t_Coder *coder)
 {
-	usleep(3000);
-	printf("Coder %d:Now Refactoring....\n", number);
+  long  total_usec;
+  long  remainder_usec;
+  long   time;
+
+  gettimeofday(&coder->tv, NULL);
+  time = coder->tv.tv_sec;
+  total_usec = coder->tv.tv_usec + (coder->shared_ctx->refactor * 1000);
+  coder->ts.tv_sec = coder->tv.tv_sec + (total_usec / 1000000);
+  remainder_usec = total_usec % 1000000;
+  coder->ts.tv_nsec = remainder_usec * 1000;
+	printf("Coder %d:Now Refactoring....\n", coder->number);
+  pthread_cond_timedwait(&coder->check_compile_cond, &coder->local_mutex, &coder->ts);
+  printf("リファクタリングにかかった秒数:%ld\n", ((long)coder->ts.tv_sec - time));
 }
 
 void	is_compile(t_Coder *coder)
 {
-  // if (coder->right_hand_dongle->available && coder->left_hand_dongle->available)
-  // {
+  long  total_usec;
+  long  remainder_usec;
+  long   time;
+
   pthread_mutex_lock(&(coder->right_dongle->dongle_lock));
   pthread_mutex_lock(&(coder->left_dongle->dongle_lock));
+
+  gettimeofday(&coder->tv, NULL);
+  time = coder->tv.tv_sec;
+  total_usec = coder->tv.tv_usec + (coder->shared_ctx->compile * 1000);
+  coder->ts.tv_sec = coder->tv.tv_sec + (total_usec / 1000000);
+  remainder_usec = total_usec % 1000000;
+  coder->ts.tv_nsec = remainder_usec * 1000;
+  printf("test time%ld\n", time);
+
+  pthread_cond_timedwait(&coder->check_compile_cond, &coder->local_mutex, &coder->ts);
+  printf("コンパイルにかかった秒数:%ld\n", ((long)coder->ts.tv_sec - time));
+  // printf("マイクロ秒:%ld\n", (long)coder->tv.tv_usec);
+
   printf("Coder Number:%d\n", coder->number);
   printf("Coder %d, RightHandDongle:%p\n", coder->number, (void *)&coder->right_dongle->dongle_lock);
   printf("Coder %d, LeftHandDongle:%p\n", coder->number, (void *)&coder->left_dongle->dongle_lock);
@@ -46,9 +85,7 @@ void	is_compile(t_Coder *coder)
   (coder->left_dongle->available) = true;
   pthread_cond_broadcast(&(coder->boss->shared_ctx->cond));
   pthread_mutex_unlock(&(coder->boss->request_mutex));
-  usleep(10000);
-  is_debug(coder->number);
-  is_refactor(coder->number);
+  // usleep(10000);
   // }
 
 }
@@ -125,7 +162,6 @@ void	*simulate(void* arg)
   while(i < coder->shared_ctx->required)
   {
     // printf("[DEBUG:simulate]\n");
-    usleep(1000000);
     pthread_mutex_lock(&(coder->boss->request_mutex));
     enqueue(coder->shared_ctx->queue, coder);
     while(!coder->wait_cond && !coder->shared_ctx->stop_flag)
@@ -154,6 +190,8 @@ void	*simulate(void* arg)
     pthread_mutex_unlock(&(coder->boss->request_mutex));
     // coder->is_compile = false;
     is_compile(coder);
+    is_debug(coder);
+    is_refactor(coder);
     printf("Coder:%d compile number:%d\n", coder->number, i);
 
     i++;

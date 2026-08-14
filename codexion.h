@@ -3,6 +3,8 @@
 
 # include <pthread.h>
 # include <stdbool.h>
+# include <time.h>
+# include <sys/time.h>
 
 
 typedef struct s_Args t_Args;
@@ -83,6 +85,9 @@ struct s_Coder
   bool      is_complete;
 	pthread_t	t_Coder;
   pthread_cond_t  check_compile_cond;
+	pthread_mutex_t local_mutex;
+  struct timeval  tv;
+  struct timespec  ts;
 	struct s_Dongle	*right_dongle;
 	struct s_Dongle	*left_dongle;
   struct s_Monitor *monitor_thread;
@@ -99,8 +104,8 @@ struct s_Monitor
 bool  is_queue_empty(t_Queue *queue);
 void  enqueue(t_Queue *queue, t_Coder *element);
 void  *dequeue(t_Queue *queue);
-void	is_debug(int	number);
-void	is_refactor(int	number);
+void	is_debug(t_Coder *coder);
+void	is_refactor(t_Coder *coder);
 void	is_compile(t_Coder *coder);
 void  *receive_from_coder(void* arg);
 void	*simulate(void* arg);
@@ -108,11 +113,11 @@ int parse_char(char *arg, char **target);
 int parse_int(char *arg, int *target);
 int parse_args(int argc, char **argv, t_Args *args);
 int alloc_dongle_array(t_SharedContext *shared_ctx);
-void init_coder_struct(t_SharedContext *shared_ctx, int i);
 int alloc_coder_array(t_SharedContext *shared_ctx);
 int alloc_queue(t_SharedContext *shared_ctx);
 int alloc_boss(t_SharedContext *shared_ctx);
 int init_context(t_Args *args, t_SharedContext *shared_ctx);
+int init_coder_mutex(t_SharedContext *shared_ctx);
 void wakeup_all_thread(t_SharedContext *shared_ctx, int coder);
 int run_simulation(t_SharedContext *shared_ctx);
 int	main(int argc, char **argv);

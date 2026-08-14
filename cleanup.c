@@ -38,6 +38,7 @@ static void cleanup_coders(t_SharedContext *shared_ctx)
     while(i < shared_ctx->coder)
     {
       pthread_cond_destroy(&shared_ctx->coders[i].check_compile_cond);
+      pthread_mutex_destroy(&shared_ctx->coders[i].local_mutex);
       i++;
     }
     free(shared_ctx->coders);
