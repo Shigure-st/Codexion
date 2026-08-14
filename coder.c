@@ -3,7 +3,6 @@
 #include <pthread.h>
 #include "codexion.h"
 
-#include <stdio.h>
 
 static int init_coder_struct(t_SharedContext *shared_ctx, int i)
 {
@@ -44,7 +43,6 @@ int init_coder_mutex(t_SharedContext *shared_ctx)
     }
     i++;
   }
-  printf("[DEBUG check]\n");
   return 0;
 }
 
