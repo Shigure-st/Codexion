@@ -20,7 +20,8 @@ int run_simulation(t_SharedContext *shared_ctx)
   int j;
 
   i = 0;
-  if (pthread_create(&shared_ctx->boss->t_Boss, NULL, receive_from_coder, shared_ctx->boss) != 0)
+  if (pthread_create(&shared_ctx->boss->t_Boss, NULL, receive_from_coder, shared_ctx->boss) != 0
+     || pthread_create(&shared_ctx->monitor->t_Monitor, NULL, check_burnout, shared_ctx->monitor) != 0)
     return -1;
   while(i < shared_ctx->coder)
   {
@@ -36,5 +37,6 @@ int run_simulation(t_SharedContext *shared_ctx)
   while(j < i)
     pthread_join(shared_ctx->coders[j++].t_Coder, NULL);
   pthread_join(shared_ctx->boss->t_Boss, NULL);
+  pthread_join(shared_ctx->monitor->t_Monitor, NULL);
   return 0;
 }

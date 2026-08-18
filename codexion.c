@@ -19,7 +19,7 @@
 #include <sys/time.h>
 
 
-void	is_debug(t_Coder *coder)
+int	is_debug(t_Coder *coder)
 {
   long  total_usec;
   long  remainder_usec;
@@ -32,11 +32,16 @@ void	is_debug(t_Coder *coder)
   remainder_usec = total_usec % 1000000;
   coder->ts.tv_nsec = remainder_usec * 1000;
 	printf("Coder %d:Now Debug....\n", coder->number);
+  pthread_mutex_lock(&(coder->local_mutex));
   pthread_cond_timedwait(&coder->check_compile_cond, &coder->local_mutex, &coder->ts);
+  pthread_mutex_unlock(&coder->local_mutex);
+  if (coder->shared_ctx->stop_flag)
+    return -1;
   printf("デバックにかかった秒数:%ld\n", ((long)coder->ts.tv_sec - time));
+  return 0;
 }
 
-void	is_refactor(t_Coder *coder)
+int	is_refactor(t_Coder *coder)
 {
   long  total_usec;
   long  remainder_usec;
@@ -49,11 +54,16 @@ void	is_refactor(t_Coder *coder)
   remainder_usec = total_usec % 1000000;
   coder->ts.tv_nsec = remainder_usec * 1000;
 	printf("Coder %d:Now Refactoring....\n", coder->number);
+  pthread_mutex_lock(&(coder->local_mutex));
   pthread_cond_timedwait(&coder->check_compile_cond, &coder->local_mutex, &coder->ts);
+  pthread_mutex_unlock(&coder->local_mutex);
+  if (coder->shared_ctx->stop_flag)
+    return -1;
   printf("リファクタリングにかかった秒数:%ld\n", ((long)coder->ts.tv_sec - time));
+  return 0;
 }
 
-void	is_compile(t_Coder *coder)
+int	is_compile(t_Coder *coder)
 {
   long  total_usec;
   long  remainder_usec;
@@ -63,6 +73,10 @@ void	is_compile(t_Coder *coder)
   pthread_mutex_lock(&(coder->left_dongle->dongle_lock));
 
   gettimeofday(&coder->tv, NULL);
+  pthread_mutex_lock(&(coder->monitor->burnout_mutex));
+  coder->last_compile_time = get_time_in_ms();
+  pthread_mutex_unlock(&(coder->monitor->burnout_mutex));
+  printf("[DEBUG] coder compile coder:%d\n", coder->number);
   time = coder->tv.tv_sec;
   total_usec = coder->tv.tv_usec + (coder->shared_ctx->compile * 1000);
   coder->ts.tv_sec = coder->tv.tv_sec + (total_usec / 1000000);
@@ -70,7 +84,9 @@ void	is_compile(t_Coder *coder)
   coder->ts.tv_nsec = remainder_usec * 1000;
   printf("test time%ld\n", time);
 
+  pthread_mutex_lock(&(coder->local_mutex));
   pthread_cond_timedwait(&coder->check_compile_cond, &coder->local_mutex, &coder->ts);
+  pthread_mutex_unlock(&coder->local_mutex);
   printf("コンパイルにかかった秒数:%ld\n", ((long)coder->ts.tv_sec - time));
   // printf("マイクロ秒:%ld\n", (long)coder->tv.tv_usec);
 
@@ -85,6 +101,9 @@ void	is_compile(t_Coder *coder)
   (coder->left_dongle->available) = true;
   pthread_cond_broadcast(&(coder->boss->shared_ctx->cond));
   pthread_mutex_unlock(&(coder->boss->request_mutex));
+  if (coder->shared_ctx->stop_flag)
+    return -1;
+  return 0;
 }
 
 bool  check_complete(t_SharedContext *shared_ctx)
@@ -121,6 +140,7 @@ void  *receive_from_coder(void* arg)
         break;
       }
       coder = dequeue(boss->shared_ctx->queue);
+      printf("[DEBUG] boss dequeue coder:%d\n", coder->number);
       while((!coder->left_dongle->available || !coder->right_dongle->available) && !boss->shared_ctx->stop_flag)
         pthread_cond_wait(&(coder->shared_ctx->cond), &(coder->boss->request_mutex));
       if (boss->shared_ctx->stop_flag)
@@ -142,12 +162,14 @@ void	*simulate(void* arg)
 {
 	struct s_Coder	*coder;
   int i;
+
   i = 0;
 	coder = arg;
   while(i < coder->shared_ctx->required)
   {
     pthread_mutex_lock(&(coder->boss->request_mutex));
     enqueue(coder->shared_ctx->queue, coder);
+    printf("[DEBUG] coder enqueue coder:%d\n", coder->number);
     while(!coder->wait_cond && !coder->shared_ctx->stop_flag)
       pthread_cond_wait(&(coder->check_compile_cond), &(coder->boss->request_mutex));
     if (coder->shared_ctx->stop_flag)
@@ -169,5 +191,52 @@ void	*simulate(void* arg)
     pthread_cond_broadcast(&(coder->shared_ctx->queue->not_empty));
 
 	return NULL;
+}
+
+long long  get_time_in_ms(void)
+{
+  struct timeval  tv;
+  long long time;
+
+  gettimeofday(&tv, NULL);
+  time = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+  return time;
+}
+
+void  *check_burnout(void* arg)
+{
+  int i;
+  long long now_time;
+  long long last_compile_time;
+  struct s_Monitor  *monitor;
+
+  monitor = arg;
+  while (!monitor->shared_ctx->stop_flag)
+  {
+    i = 0;
+    while(i < monitor->shared_ctx->coder)
+    {
+      if (monitor->shared_ctx->coders[i++].is_compile)
+        continue;
+      pthread_mutex_lock(&(monitor->burnout_mutex));
+      last_compile_time = monitor->shared_ctx->coders[i].last_compile_time;
+      pthread_mutex_unlock(&(monitor->burnout_mutex));
+      if (last_compile_time == 0)
+      {
+        break;
+
+      }
+      now_time = get_time_in_ms();
+      if ((now_time - last_compile_time) > monitor->shared_ctx->burnout)
+      {
+        printf("経過時間:%lld\n", (now_time - last_compile_time));
+        monitor->shared_ctx->stop_flag = true;
+        printf("coder:%d のプログラムは燃え尽きた\n", monitor->shared_ctx->coders[i].number);
+        return NULL;
+      }
+      i++;
+    }
+  }
+  return NULL;
 }
 

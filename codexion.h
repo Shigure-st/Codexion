@@ -67,6 +67,7 @@ struct s_SharedContext
 	t_Coder		*coders;
   t_Queue  *queue;
   t_Boss    *boss;
+  t_Monitor    *monitor;
   pthread_cond_t  cond;
 };
 
@@ -83,6 +84,7 @@ struct s_Coder
 	bool			is_compile;
   bool      wait_cond;
   bool      is_complete;
+  long      last_compile_time;
 	pthread_t	t_Coder;
   pthread_cond_t  check_compile_cond;
 	pthread_mutex_t local_mutex;
@@ -90,23 +92,26 @@ struct s_Coder
   struct timespec  ts;
 	struct s_Dongle	*right_dongle;
 	struct s_Dongle	*left_dongle;
-  struct s_Monitor *monitor_thread;
+  struct s_Monitor *monitor;
   struct s_Boss *boss;
 	struct s_SharedContext	*shared_ctx;
 };
 
 struct s_Monitor
 {
-  pthread_mutex_t request_mutex;
+	pthread_t	      t_Monitor;
+  pthread_mutex_t burnout_mutex;
+  struct timeval  tv;
+	struct s_SharedContext	*shared_ctx;
 };
 
 
 bool  is_queue_empty(t_Queue *queue);
 void  enqueue(t_Queue *queue, t_Coder *element);
 void  *dequeue(t_Queue *queue);
-void	is_debug(t_Coder *coder);
-void	is_refactor(t_Coder *coder);
-void	is_compile(t_Coder *coder);
+int	is_debug(t_Coder *coder);
+int	  is_refactor(t_Coder *coder);
+int	is_compile(t_Coder *coder);
 void  *receive_from_coder(void* arg);
 void	*simulate(void* arg);
 int parse_char(char *arg, char **target);
@@ -116,11 +121,14 @@ int alloc_dongle_array(t_SharedContext *shared_ctx);
 int alloc_coder_array(t_SharedContext *shared_ctx);
 int alloc_queue(t_SharedContext *shared_ctx);
 int alloc_boss(t_SharedContext *shared_ctx);
+int alloc_monitor(t_SharedContext *shared_ctx);
 int init_context(t_Args *args, t_SharedContext *shared_ctx);
 int init_coder_mutex(t_SharedContext *shared_ctx);
 void wakeup_all_thread(t_SharedContext *shared_ctx, int coder);
 int run_simulation(t_SharedContext *shared_ctx);
 int	main(int argc, char **argv);
 int  cleanup_context(t_SharedContext *shared_ctx);
+void  *check_burnout(void* arg);
+long long  get_time_in_ms(void);
 
 #endif

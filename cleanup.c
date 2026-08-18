@@ -28,6 +28,16 @@ static void cleanup_boss(t_SharedContext *shared_ctx)
   }
 }
 
+static void cleanup_monitor(t_SharedContext *shared_ctx)
+{
+  if (shared_ctx->monitor != NULL)
+  {
+    pthread_mutex_destroy(&shared_ctx->monitor->burnout_mutex);
+    free(shared_ctx->monitor);
+    shared_ctx->monitor = NULL;
+  }
+}
+
 static void cleanup_coders(t_SharedContext *shared_ctx)
 {
   int i;
@@ -67,5 +77,6 @@ int  cleanup_context(t_SharedContext *shared_ctx)
   cleanup_boss(shared_ctx);
   cleanup_coders(shared_ctx);
   cleanup_queue(shared_ctx);
+  cleanup_monitor(shared_ctx);
   return -1;
 }

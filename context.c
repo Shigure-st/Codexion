@@ -19,6 +19,7 @@ static int init_shared_context(t_Args *args, t_SharedContext *shared_ctx)
   shared_ctx->boss = NULL;
   shared_ctx->coders = NULL;
   shared_ctx->queue = NULL;
+  shared_ctx->monitor = NULL;
   return 0;
 
   // printf("number_of_coders:%d\n", shared_ctx->coders);
@@ -37,6 +38,7 @@ int init_context(t_Args *args, t_SharedContext *shared_ctx)
   if(init_shared_context(args, shared_ctx) != 0
      || alloc_dongle_array(shared_ctx) != 0
      || alloc_boss(shared_ctx) != 0
+     || alloc_monitor(shared_ctx) != 0
      || alloc_coder_array(shared_ctx) != 0
      || alloc_queue(shared_ctx) != 0
      || init_coder_mutex(shared_ctx) != 0)
