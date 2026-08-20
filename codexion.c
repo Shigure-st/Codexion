@@ -31,7 +31,7 @@ int	is_debug(t_Coder *coder)
   coder->ts.tv_sec = coder->tv.tv_sec + (total_usec / 1000000);
   remainder_usec = total_usec % 1000000;
   coder->ts.tv_nsec = remainder_usec * 1000;
-	printf("Coder %d:Now Debug....\n", coder->number);
+	// printf("Coder %d:Now Debug....\n", coder->number);
   pthread_mutex_lock(&(coder->local_mutex));
   pthread_cond_timedwait(&coder->check_compile_cond, &coder->local_mutex, &coder->ts);
   pthread_mutex_unlock(&coder->local_mutex);
@@ -53,7 +53,7 @@ int	is_refactor(t_Coder *coder)
   coder->ts.tv_sec = coder->tv.tv_sec + (total_usec / 1000000);
   remainder_usec = total_usec % 1000000;
   coder->ts.tv_nsec = remainder_usec * 1000;
-	printf("Coder %d:Now Refactoring....\n", coder->number);
+	// printf("Coder %d:Now Refactoring....\n", coder->number);
   pthread_mutex_lock(&(coder->local_mutex));
   pthread_cond_timedwait(&coder->check_compile_cond, &coder->local_mutex, &coder->ts);
   pthread_mutex_unlock(&coder->local_mutex);
@@ -67,33 +67,35 @@ int	is_compile(t_Coder *coder)
 {
   long  total_usec;
   long  remainder_usec;
-  long   time;
+  // long   time;
 
+  coder->last_compile_time = get_time_in_ms();
   pthread_mutex_lock(&(coder->right_dongle->dongle_lock));
   pthread_mutex_lock(&(coder->left_dongle->dongle_lock));
 
   gettimeofday(&coder->tv, NULL);
   pthread_mutex_lock(&(coder->monitor->burnout_mutex));
-  coder->last_compile_time = get_time_in_ms();
   pthread_mutex_unlock(&(coder->monitor->burnout_mutex));
   printf("[DEBUG] coder compile coder:%d\n", coder->number);
-  time = coder->tv.tv_sec;
+  // time = coder->tv.tv_sec;
   total_usec = coder->tv.tv_usec + (coder->shared_ctx->compile * 1000);
   coder->ts.tv_sec = coder->tv.tv_sec + (total_usec / 1000000);
   remainder_usec = total_usec % 1000000;
   coder->ts.tv_nsec = remainder_usec * 1000;
-  printf("test time%ld\n", time);
+  // printf("test time%ld\n", time);
 
   pthread_mutex_lock(&(coder->local_mutex));
   pthread_cond_timedwait(&coder->check_compile_cond, &coder->local_mutex, &coder->ts);
   pthread_mutex_unlock(&coder->local_mutex);
-  printf("コンパイルにかかった秒数:%ld\n", ((long)coder->ts.tv_sec - time));
-  // printf("マイクロ秒:%ld\n", (long)coder->tv.tv_usec);
-
-  printf("Coder Number:%d\n", coder->number);
-  printf("Coder %d, RightHandDongle:%p\n", coder->number, (void *)&coder->right_dongle->dongle_lock);
-  printf("Coder %d, LeftHandDongle:%p\n", coder->number, (void *)&coder->left_dongle->dongle_lock);
-  printf("Coder %d:Now Compile....\n", coder->number);
+  // printf("コンパイルにかかった秒数:%ld\n", ((long)coder->ts.tv_sec - time));
+  // // printf("マイクロ秒:%ld\n", (long)coder->tv.tv_usec);
+  //
+  // printf("Coder Number:%d\n", coder->number);
+  // printf("Coder %d, RightHandDongle:%p\n", coder->number, (void *)&coder->right_dongle->dongle_lock);
+  // printf("Coder %d, LeftHandDongle:%p\n", coder->number, (void *)&coder->left_dongle->dongle_lock);
+  // printf("Coder %d:Now Compile....\n", coder->number);
+  coder->right_dongle->cooldown_end_time = get_time_in_ms() + coder->shared_ctx->cooldown;
+  coder->left_dongle->cooldown_end_time = get_time_in_ms() + coder->shared_ctx->cooldown;
   pthread_mutex_unlock(&coder->right_dongle->dongle_lock);
   pthread_mutex_unlock(&coder->left_dongle->dongle_lock);
   pthread_mutex_lock(&(coder->boss->request_mutex));
@@ -115,7 +117,7 @@ bool  check_complete(t_SharedContext *shared_ctx)
   {
     if (!shared_ctx->coders[i].is_complete)
       return false;
-    printf("[DEBUG check]\n");
+    // printf("[DEBUG check]\n");
     i++;
   }
   pthread_mutex_lock(&(shared_ctx->boss->request_mutex));
@@ -124,10 +126,55 @@ bool  check_complete(t_SharedContext *shared_ctx)
   return true;
 }
 
+bool is_dongle_availble(t_Coder *coder)
+{
+  long long now;
+  t_Dongle  *right;
+  t_Dongle  *left;
+
+  now = get_time_in_ms();
+  right = coder->right_dongle;
+  left = coder->left_dongle;
+  // printf("now:%lld\n", now);
+  // printf("dongle right:%lld\n", right->cooldown_end_time);
+  // printf("dongle left:%lld\n", left->cooldown_end_time);
+  // printf("dongle right bool:%d\n", right->available);
+  // printf("dongle left bool:%d\n", left->available);
+  // printf("Dongle available Coder %d, RightHandDongle:%p\n", coder->number, (void *)&right->dongle_lock);
+  // printf("Dongle available Coder %d, LeftHandDongle:%p\n", coder->number, (void *)&left->dongle_lock);
+  if (now >= right->cooldown_end_time && now >= left->cooldown_end_time)
+  {
+    // printf("[DEBUG] dongle_abailble aaaaaaaaaaaaa\n");
+    if (coder->left_dongle->available && coder->right_dongle->available)
+      return true;
+  }
+  return false;
+}
+
+long long get_cooldown_time(t_Dongle *right, t_Dongle *left)
+{
+  if (right->cooldown_end_time >= left->cooldown_end_time)
+    return right->cooldown_end_time;
+  else
+    return left->cooldown_end_time;
+}
+
+struct timespec ms_to_timespec(long long ms)
+{
+  struct timespec  ts;
+
+  ts.tv_sec = ms / 1000;
+  ts.tv_nsec = (ms % 1000) * 1000000;
+
+  return ts;
+}
+
 void  *receive_from_coder(void* arg)
 {
 	struct s_Boss	*boss;
   struct s_Coder *coder;
+  long long cooldown;
+
 	boss = arg;
   while(!boss->shared_ctx->stop_flag)
   {
@@ -140,9 +187,20 @@ void  *receive_from_coder(void* arg)
         break;
       }
       coder = dequeue(boss->shared_ctx->queue);
-      printf("[DEBUG] boss dequeue coder:%d\n", coder->number);
-      while((!coder->left_dongle->available || !coder->right_dongle->available) && !boss->shared_ctx->stop_flag)
-        pthread_cond_wait(&(coder->shared_ctx->cond), &(coder->boss->request_mutex));
+      // printf("[DEBUG] boss dequeue coder:%d\n", coder->number);
+      while(!is_dongle_availble(coder) && !boss->shared_ctx->stop_flag)
+      {
+        cooldown = get_cooldown_time(coder->right_dongle, coder->left_dongle);
+        if (get_time_in_ms() < cooldown)
+        {
+          coder->ts = ms_to_timespec(cooldown);
+          pthread_cond_timedwait(&coder->shared_ctx->cond, &boss->request_mutex, &(coder->ts));
+        }
+        else
+          pthread_cond_wait(&(coder->shared_ctx->cond), &(boss->request_mutex));
+
+      }
+      // printf("[DEBUG] boss dequeue after:%d\n", coder->number);
       if (boss->shared_ctx->stop_flag)
       {
         pthread_mutex_unlock(&(boss->request_mutex));
@@ -169,7 +227,7 @@ void	*simulate(void* arg)
   {
     pthread_mutex_lock(&(coder->boss->request_mutex));
     enqueue(coder->shared_ctx->queue, coder);
-    printf("[DEBUG] coder enqueue coder:%d\n", coder->number);
+    // printf("[DEBUG] coder enqueue coder:%d\n", coder->number);
     while(!coder->wait_cond && !coder->shared_ctx->stop_flag)
       pthread_cond_wait(&(coder->check_compile_cond), &(coder->boss->request_mutex));
     if (coder->shared_ctx->stop_flag)
@@ -192,6 +250,7 @@ void	*simulate(void* arg)
 
 	return NULL;
 }
+
 
 long long  get_time_in_ms(void)
 {
@@ -216,26 +275,33 @@ void  *check_burnout(void* arg)
     i = 0;
     while(i < monitor->shared_ctx->coder)
     {
-      if (monitor->shared_ctx->coders[i++].is_compile)
+      if (monitor->shared_ctx->coders[i].is_complete)
+      {
+        i++;
         continue;
+      }
       pthread_mutex_lock(&(monitor->burnout_mutex));
       last_compile_time = monitor->shared_ctx->coders[i].last_compile_time;
       pthread_mutex_unlock(&(monitor->burnout_mutex));
       if (last_compile_time == 0)
       {
-        break;
-
+        i++;
+        continue;
       }
       now_time = get_time_in_ms();
       if ((now_time - last_compile_time) > monitor->shared_ctx->burnout)
       {
         printf("経過時間:%lld\n", (now_time - last_compile_time));
         monitor->shared_ctx->stop_flag = true;
+        wakeup_all_thread(monitor->shared_ctx, monitor->shared_ctx->coder);
         printf("coder:%d のプログラムは燃え尽きた\n", monitor->shared_ctx->coders[i].number);
         return NULL;
       }
+      // if (is_dongle_availble(&(monitor->shared_ctx->coders[i])))
+      //   pthread_cond_broadcast(&(monitor->shared_ctx->cond));
       i++;
     }
+    usleep(1000);
   }
   return NULL;
 }

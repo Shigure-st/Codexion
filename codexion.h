@@ -76,6 +76,8 @@ struct s_Dongle
 	int				i;
 	pthread_mutex_t dongle_lock;
 	bool			available;
+  long long cooldown_end_time;
+  struct timespec  ts;
 };
 
 struct s_Coder
