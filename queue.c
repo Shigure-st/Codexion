@@ -111,7 +111,7 @@ int alloc_heapqueue(t_SharedContext *shared_ctx)
       free_heapqueue(shared_ctx);
       return (cleanup_context(shared_ctx));
     }
-    d->wait_coders->data = malloc(sizeof(t_HeapDate) * 2);
+    d->wait_coders->data = malloc(sizeof(t_HeapData) * 2);
     if (d->wait_coders->data == NULL)
     {
       free_heapqueue(shared_ctx);

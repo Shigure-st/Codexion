@@ -16,7 +16,7 @@ typedef struct s_Boss t_Boss;
 typedef struct s_Data t_Data;
 typedef struct s_Queue t_Queue;
 typedef struct s_Heap t_Heap;
-typedef struct s_HeapDate t_HeapDate;
+typedef struct s_HeapData t_HeapData;
 
 struct s_Args
 {
@@ -32,12 +32,12 @@ struct s_Args
 
 struct s_Heap
 {
-  t_HeapDate    *data;
+  t_HeapData    *data;
   int           size;
   int           capa;
 };
 
-struct s_HeapDate
+struct s_HeapData
 {
   t_Coder *coder;
   long long  priority;
@@ -149,5 +149,7 @@ int  cleanup_context(t_SharedContext *shared_ctx);
 void  *check_burnout(void* arg);
 long long  get_time_in_ms(void);
 void  free_heapqueue(t_SharedContext *shared_ctx);
+int heap_pop(t_Heap *queue, t_HeapData *ret);
+void heap_push(t_Heap *queue, t_HeapData *push_data);
 
 #endif

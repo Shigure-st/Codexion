@@ -2,26 +2,27 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "codexion.h"
 
-typedef struct s_Data t_Data;
-typedef struct s_HeapData t_HeapData;
-typedef struct s_Queue t_Queue;
+// typedef struct s_Data t_Data;
+// typedef struct s_HeapData t_HeapData;
+// typedef struct s_Queue t_Queue;
+//
+// typedef struct s_Heap t_Heap;
+//
+// struct s_HeapData
+// {
+//   int  data;
+// };
+//
+// struct s_Heap
+// {
+//   t_HeapData  *data;
+//   int     size;
+//   int     capa;
+// };
 
-typedef struct s_Heap t_Heap;
-
-struct s_HeapData
-{
-  int  data;
-};
-
-struct s_Heap
-{
-  t_HeapData  *data;
-  int     size;
-  int     capa;
-};
-
-void shift_up(t_Heap *queue)
+static void shift_up(t_Heap *queue)
 {
   int parent;
   int curent;
@@ -29,7 +30,7 @@ void shift_up(t_Heap *queue)
 
   curent = queue->size;
   parent = (curent - 1) / 2;
-  while (curent != 0 && queue->data[parent].data > queue->data[curent].data)
+  while (curent != 0 && queue->data[parent].priority > queue->data[curent].priority)
   {
     tmp = queue->data[parent];
     queue->data[parent] = queue->data[curent];
@@ -45,14 +46,14 @@ static int get_min_child(t_Heap *queue, int left, int right)
     return left;
   else
   {
-    if (queue->data[left].data < queue->data[right].data)
+    if (queue->data[left].priority < queue->data[right].priority)
       return left;
     else
       return right;
   }
 }
 
-void shift_down(t_Heap *queue)
+static void shift_down(t_Heap *queue)
 {
   int parent;
   t_HeapData tmp;
@@ -74,7 +75,7 @@ void shift_down(t_Heap *queue)
     //     child = right_child;
     // }
     child = get_min_child(queue, (parent * 2) + 1, (parent * 2) + 2);
-    if (queue->data[parent].data > queue->data[child].data)
+    if (queue->data[parent].priority > queue->data[child].priority)
     {
       tmp = queue->data[parent];
       queue->data[parent] = queue->data[child];
@@ -108,52 +109,52 @@ void heap_push(t_Heap *queue, t_HeapData *push_data)
 }
 
 
-int main(void)
-{
-    t_Heap heap;
-    t_HeapData input;
-    t_HeapData ret;
-
-    int values[] = {6, 5, 4, 3, 2, 1};
-    int count = sizeof(values) / sizeof(values[0]);
-
-    heap.capa = count;
-    heap.size = 0;
-    heap.data = malloc(sizeof(t_HeapData) * heap.capa);
-
-    if (heap.data == NULL)
-        return 1;
-
-    /* push */
-    for (int i = 0; i < count; i++)
-    {
-        input.data = values[i];
-        heap_push(&heap, &input);
-    }
-
-    printf("Heap after push:\n");
-    for (int i = 0; i < heap.size; i++)
-        printf("%d ", heap.data[i].data);
-    printf("\n");
-
-    /* pop */
-    printf("Pop order:\n");
-    while (heap.size > 0)
-    {
-        if (heap_pop(&heap, &ret) == -1)
-        {
-            printf("pop failed\n");
-            break;
-        }
-
-        printf("%d ", ret.data);
-    }
-    printf("\n");
-
-    free(heap.data);
-
-    return 0;
-}
+// int main(void)
+// {
+//     t_Heap heap;
+//     t_HeapData input;
+//     t_HeapData ret;
+//
+//     int values[] = {6, 5, 4, 3, 2, 1};
+//     int count = sizeof(values) / sizeof(values[0]);
+//
+//     heap.capa = count;
+//     heap.size = 0;
+//     heap.data = malloc(sizeof(t_HeapData) * heap.capa);
+//
+//     if (heap.data == NULL)
+//         return 1;
+//
+//     /* push */
+//     for (int i = 0; i < count; i++)
+//     {
+//         input.data = values[i];
+//         heap_push(&heap, &input);
+//     }
+//
+//     printf("Heap after push:\n");
+//     for (int i = 0; i < heap.size; i++)
+//         printf("%d ", heap.data[i].data);
+//     printf("\n");
+//
+//     /* pop */
+//     printf("Pop order:\n");
+//     while (heap.size > 0)
+//     {
+//         if (heap_pop(&heap, &ret) == -1)
+//         {
+//             printf("pop failed\n");
+//             break;
+//         }
+//
+//         printf("%d ", ret.data);
+//     }
+//     printf("\n");
+//
+//     free(heap.data);
+//
+//     return 0;
+// }
 
 
 
