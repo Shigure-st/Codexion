@@ -15,6 +15,8 @@ typedef struct s_Monitor t_Monitor;
 typedef struct s_Boss t_Boss;
 typedef struct s_Data t_Data;
 typedef struct s_Queue t_Queue;
+typedef struct s_Heap t_Heap;
+typedef struct s_HeapDate t_HeapDate;
 
 struct s_Args
 {
@@ -26,6 +28,19 @@ struct s_Args
   int   required;
   int   cooldown;
   char  *scheduler;
+};
+
+struct s_Heap
+{
+  t_HeapDate    *data;
+  int           size;
+  int           capa;
+};
+
+struct s_HeapDate
+{
+  t_Coder *coder;
+  long long  priority;
 };
 
 struct s_Queue
@@ -78,6 +93,7 @@ struct s_Dongle
 	bool			available;
   long long cooldown_end_time;
   struct timespec  ts;
+  t_Heap *wait_coders;
 };
 
 struct s_Coder
@@ -132,5 +148,6 @@ int	main(int argc, char **argv);
 int  cleanup_context(t_SharedContext *shared_ctx);
 void  *check_burnout(void* arg);
 long long  get_time_in_ms(void);
+void  free_heapqueue(t_SharedContext *shared_ctx);
 
 #endif

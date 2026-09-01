@@ -68,3 +68,56 @@ int alloc_queue(t_SharedContext *shared_ctx)
   }
   return 0;
 }
+
+void free_dongle_heap(t_Dongle *d)
+{
+  if (d == NULL || d->wait_coders == NULL)
+    return;
+  if (d->wait_coders->data != NULL)
+  {
+    free(d->wait_coders->data);
+    d->wait_coders->data = NULL;
+  }
+  free(d->wait_coders);
+  d->wait_coders = NULL;
+}
+
+void free_heapqueue(t_SharedContext *shared_ctx)
+{
+  int i;
+
+  if (shared_ctx == NULL || shared_ctx->dongles == NULL)
+    return;
+  i = 0;
+  while (i < shared_ctx->coder)
+  {
+    free_dongle_heap(&shared_ctx->dongles[i]);
+    i++;
+  }
+}
+
+int alloc_heapqueue(t_SharedContext *shared_ctx)
+{
+  int i;
+  t_Dongle *d;
+
+  i = 0;
+  while (i < shared_ctx->coder)
+  {
+    d = &shared_ctx->dongles[i];
+    d->wait_coders = malloc(sizeof(t_Heap));
+    if (d->wait_coders == NULL)
+    {
+      free_heapqueue(shared_ctx);
+      return (cleanup_context(shared_ctx));
+    }
+    d->wait_coders->data = malloc(sizeof(t_HeapDate) * 2);
+    if (d->wait_coders->data == NULL)
+    {
+      free_heapqueue(shared_ctx);
+      return (cleanup_context(shared_ctx));
+    }
+    i++;
+  }
+  return 0;
+}

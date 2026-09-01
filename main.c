@@ -16,6 +16,7 @@ int	main(int argc, char **argv)
   run_simulation(&shared_ctx);
   cleanup_context(&shared_ctx);
   printf("argc:%d, argv:%s\n", argc, argv[1]);
+  // pthread_cond_init(&shared_ctx.cond, NULL);
 
 	return (0);
 }

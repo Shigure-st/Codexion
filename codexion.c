@@ -225,6 +225,9 @@ void	*simulate(void* arg)
 	coder = arg;
   while(i < coder->shared_ctx->required)
   {
+    // if (coder->shared_ctx)
+
+
     pthread_mutex_lock(&(coder->boss->request_mutex));
     enqueue(coder->shared_ctx->queue, coder);
     // printf("[DEBUG] coder enqueue coder:%d\n", coder->number);
