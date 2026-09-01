@@ -53,5 +53,4 @@ dkms.conf
 
 # debug information files
 *.dwo
-heap.c
 Codexion
