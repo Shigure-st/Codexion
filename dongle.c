@@ -18,6 +18,7 @@ int alloc_dongle_array(t_SharedContext *shared_ctx)
     shared_ctx->dongles[i].cooldown_end_time = 0;
     shared_ctx->dongles[i].ts.tv_nsec = 0;
     shared_ctx->dongles[i].ts.tv_sec = 0;
+    shared_ctx->dongles[i].wait_coders = NULL;
 	  if(pthread_mutex_init(&shared_ctx->dongles[i].dongle_lock, NULL) != 0)
     {
       j = 0;

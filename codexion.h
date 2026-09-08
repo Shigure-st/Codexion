@@ -154,5 +154,6 @@ void  free_heapqueue(t_SharedContext *shared_ctx);
 int heap_pop(t_Dongle *dongle);
 void heap_push(t_Dongle *dongle, t_Coder *coder);
 bool  is_empty_and_free(t_Dongle *dongle);
+int alloc_heapqueue(t_SharedContext *shared_ctx);
 
 #endif

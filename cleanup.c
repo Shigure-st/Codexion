@@ -69,17 +69,17 @@ static void cleanup_heapqueue(t_SharedContext *shared_ctx)
   // }
 }
 
-static void cleanup_queue(t_SharedContext *shared_ctx)
-{
-  if (shared_ctx->queue != NULL)
-  {
-    pthread_cond_destroy(&shared_ctx->queue->not_empty);
-    if (shared_ctx->queue->arr != NULL)
-      free(shared_ctx->queue->arr);
-    free(shared_ctx->queue);
-    shared_ctx->queue = NULL;
-  }
-}
+// static void cleanup_queue(t_SharedContext *shared_ctx)
+// {
+//   if (shared_ctx->queue != NULL)
+//   {
+//     pthread_cond_destroy(&shared_ctx->queue->not_empty);
+//     if (shared_ctx->queue->arr != NULL)
+//       free(shared_ctx->queue->arr);
+//     free(shared_ctx->queue);
+//     shared_ctx->queue = NULL;
+//   }
+// }
 
 int  cleanup_context(t_SharedContext *shared_ctx)
 {

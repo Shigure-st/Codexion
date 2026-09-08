@@ -70,13 +70,12 @@ int	is_compile(t_Coder *coder)
   // long   time;
 
   coder->last_compile_time = get_time_in_ms();
-  pthread_mutex_lock(&(coder->right_dongle->dongle_lock));
-  pthread_mutex_lock(&(coder->left_dongle->dongle_lock));
+  // pthread_mutex_lock(&(coder->right_dongle->dongle_lock));
+  // pthread_mutex_lock(&(coder->left_dongle->dongle_lock));
 
   gettimeofday(&coder->tv, NULL);
   pthread_mutex_lock(&(coder->monitor->burnout_mutex));
   pthread_mutex_unlock(&(coder->monitor->burnout_mutex));
-  printf("[DEBUG] coder compile coder:%d\n", coder->number);
   // time = coder->tv.tv_sec;
   total_usec = coder->tv.tv_usec + (coder->shared_ctx->compile * 1000);
   coder->ts.tv_sec = coder->tv.tv_sec + (total_usec / 1000000);
@@ -94,17 +93,24 @@ int	is_compile(t_Coder *coder)
   // printf("Coder %d, RightHandDongle:%p\n", coder->number, (void *)&coder->right_dongle->dongle_lock);
   // printf("Coder %d, LeftHandDongle:%p\n", coder->number, (void *)&coder->left_dongle->dongle_lock);
   // printf("Coder %d:Now Compile....\n", coder->number);
+  pthread_mutex_lock(&(coder->right_dongle->dongle_lock));
+  pthread_mutex_lock(&(coder->left_dongle->dongle_lock));
+  printf("[DEBUG] coder compile coder:%d\n", coder->number);
   coder->right_dongle->cooldown_end_time = get_time_in_ms() + coder->shared_ctx->cooldown;
   coder->left_dongle->cooldown_end_time = get_time_in_ms() + coder->shared_ctx->cooldown;
-  pthread_mutex_unlock(&coder->right_dongle->dongle_lock);
-  pthread_mutex_unlock(&coder->left_dongle->dongle_lock);
-  pthread_mutex_lock(&(coder->boss->request_mutex));
+  // pthread_mutex_unlock(&coder->right_dongle->dongle_lock);
+  // pthread_mutex_unlock(&coder->left_dongle->dongle_lock);
+  // pthread_mutex_lock(&(coder->boss->request_mutex));
   (coder->right_dongle->available) = true;
   (coder->left_dongle->available) = true;
-  pthread_cond_broadcast(coder->right_dongle->coder_cond);
-  pthread_cond_broadcast(coder->left_dongle->coder_cond);
-  pthread_cond_broadcast(&(coder->boss->shared_ctx->cond));
-  pthread_mutex_unlock(&(coder->boss->request_mutex));
+  pthread_mutex_unlock(&coder->right_dongle->dongle_lock);
+  pthread_mutex_unlock(&coder->left_dongle->dongle_lock);
+  if (coder->right_dongle->coder_cond != NULL)
+    pthread_cond_broadcast(coder->right_dongle->coder_cond);
+  if (coder->left_dongle->coder_cond != NULL)
+    pthread_cond_broadcast(coder->left_dongle->coder_cond);
+  // pthread_cond_broadcast(&(coder->boss->shared_ctx->cond));
+  // pthread_mutex_unlock(&(coder->boss->request_mutex));
   if (coder->shared_ctx->stop_flag)
     return -1;
   return 0;
@@ -268,14 +274,11 @@ bool try_to_acquire(t_Coder *coder)
   pthread_mutex_unlock(&(coder->right_dongle->dongle_lock));
   pthread_mutex_unlock(&(coder->left_dongle->dongle_lock));
   return ok;
-
-
 }
 
 void acquire_dongles(t_Coder *coder)
 {
   struct timespec wakeup;
-  struct t_HeapData *dummy;
   bool acquire;
 
   acquire = false;
@@ -320,7 +323,7 @@ void	*simulate(void* arg)
     is_compile(coder);
     is_debug(coder);
     is_refactor(coder);
-    printf("Coder:%d compile number:%d\n", coder->number, i);
+    printf("Coder:%d compile number:%d\n", coder->number, i + 1);
     i++;
   }
   printf("compile complete\n");

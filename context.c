@@ -42,6 +42,7 @@ int init_context(t_Args *args, t_SharedContext *shared_ctx)
      || alloc_monitor(shared_ctx) != 0
      || alloc_coder_array(shared_ctx) != 0
      || alloc_queue(shared_ctx) != 0
+     || alloc_heapqueue(shared_ctx) != 0
      || init_coder_mutex(shared_ctx) != 0)
     return -1;
   return 0;

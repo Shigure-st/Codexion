@@ -12,6 +12,7 @@ SRCS			=  main.c \
 					 simulate.c \
 					 codexion.c \
 					 monitor.c \
+					 heap.c \
 					 cleanup.c
 
 OBJS		=  $(SRCS:.c=.o)

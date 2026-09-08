@@ -11,7 +11,7 @@ void wakeup_all_thread(t_SharedContext *shared_ctx, int coder)
       pthread_cond_broadcast(&(shared_ctx->coders[i].check_compile_cond));
       i++;
   }
-  pthread_cond_broadcast(&(shared_ctx->boss->shared_ctx->cond));
+  // pthread_cond_broadcast(&(shared_ctx->boss->shared_ctx->cond));
 }
 
 int run_simulation(t_SharedContext *shared_ctx)
@@ -20,8 +20,10 @@ int run_simulation(t_SharedContext *shared_ctx)
   int j;
 
   i = 0;
-  if (pthread_create(&shared_ctx->boss->t_Boss, NULL, receive_from_coder, shared_ctx->boss) != 0
-     || pthread_create(&shared_ctx->monitor->t_Monitor, NULL, check_burnout, shared_ctx->monitor) != 0)
+  // if (pthread_create(&shared_ctx->boss->t_Boss, NULL, receive_from_coder, shared_ctx->boss) != 0
+  //    || pthread_create(&shared_ctx->monitor->t_Monitor, NULL, check_burnout, shared_ctx->monitor) != 0)
+  //   return -1;
+  if (pthread_create(&shared_ctx->monitor->t_Monitor, NULL, check_burnout, shared_ctx->monitor) != 0)
     return -1;
   while(i < shared_ctx->coder)
   {
@@ -36,7 +38,7 @@ int run_simulation(t_SharedContext *shared_ctx)
   j = 0;
   while(j < i)
     pthread_join(shared_ctx->coders[j++].t_Coder, NULL);
-  pthread_join(shared_ctx->boss->t_Boss, NULL);
+  // pthread_join(shared_ctx->boss->t_Boss, NULL);
   pthread_join(shared_ctx->monitor->t_Monitor, NULL);
   return 0;
 }
