@@ -75,6 +75,7 @@ struct s_SharedContext
   int			compile;
   int     required;
   int     cooldown;
+  long long next_seq;
   char  *scheduler;
   bool		is_active;
   bool		stop_flag;
@@ -92,6 +93,7 @@ struct s_Dongle
 	pthread_mutex_t dongle_lock;
 	bool			available;
   long long cooldown_end_time;
+  pthread_cond_t  *coder_cond;
   struct timespec  ts;
   t_Heap *wait_coders;
 };
@@ -149,7 +151,8 @@ int  cleanup_context(t_SharedContext *shared_ctx);
 void  *check_burnout(void* arg);
 long long  get_time_in_ms(void);
 void  free_heapqueue(t_SharedContext *shared_ctx);
-int heap_pop(t_Heap *queue, t_HeapData *ret);
-void heap_push(t_Heap *queue, t_HeapData *push_data);
+int heap_pop(t_Dongle *dongle);
+void heap_push(t_Dongle *dongle, t_Coder *coder);
+bool  is_empty_and_free(t_Dongle *dongle);
 
 #endif

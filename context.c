@@ -14,6 +14,7 @@ static int init_shared_context(t_Args *args, t_SharedContext *shared_ctx)
   shared_ctx->required = args->required;
   shared_ctx->cooldown = args->cooldown;
   shared_ctx->scheduler = args->scheduler;
+  shared_ctx->next_seq = 0;
   shared_ctx->stop_flag = false;
   shared_ctx->dongles = NULL;
   shared_ctx->boss = NULL;

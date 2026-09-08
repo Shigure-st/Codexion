@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 #include "codexion.h"
 
 // typedef struct s_Data t_Data;
@@ -21,6 +22,18 @@
 //   int     size;
 //   int     capa;
 // };
+//
+bool  is_empty_and_free(t_Dongle *dongle)
+{
+  bool empty_and_free;
+
+  pthread_mutex_lock(&(dongle->dongle_lock));
+  empty_and_free = (dongle->available && dongle->wait_coders->size == 0);
+  pthread_mutex_unlock(&(dongle->dongle_lock));
+  return empty_and_free;
+}
+
+// bool ft_heap_peek(t_Dongle *dongle, t_)
 
 static void shift_up(t_Heap *queue)
 {
@@ -87,26 +100,52 @@ static void shift_down(t_Heap *queue)
   }
 }
 
-int heap_pop(t_Heap *queue, t_HeapData *ret)
+int heap_pop(t_Dongle *dongle)
 {
+  t_Heap *queue;
+
+  queue = dongle->wait_coders;
   if (queue->size == 0)
   {
     printf("queue is emptyh\n");
     return -1;
   }
-  *ret = queue->data[0];
-  queue->data[0] = queue->data[queue->size - 1];
+  // *ret = queue->data[0];
   queue->size--;
+  queue->data[0] = queue->data[queue->size];
   shift_down(queue);
+  if (queue->size > 0)
+    dongle->coder_cond = &queue->data[0].coder->check_compile_cond;
+  else
+    dongle->coder_cond = NULL;
   return 0;
 }
 
-void heap_push(t_Heap *queue, t_HeapData *push_data)
+void heap_push(t_Dongle *dongle, t_Coder *coder)
 {
-  queue->data[queue->size] = *push_data;
+  t_Heap *queue;
+
+  pthread_mutex_lock(&(dongle->dongle_lock));
+  queue = dongle->wait_coders;
+  queue->data[queue->size].coder = coder;
+  if (strcmp(coder->shared_ctx->scheduler, "fifo") == 0)
+    queue->data[queue->size].priority = coder->shared_ctx->next_seq++;
+  else
+    queue->data[queue->size].priority = coder->last_compile_time;
   shift_up(queue);
   queue->size++;
+  if (queue->data[0].coder == coder)
+    dongle->coder_cond = &coder->check_compile_cond;
+  pthread_mutex_unlock(&(dongle->dongle_lock));
+
 }
+
+// void heap_push(t_Heap *queue, t_HeapData *push_data)
+// {
+//   queue->data[queue->size] = *push_data;
+//   shift_up(queue);
+//   queue->size++;
+// }
 
 
 // int main(void)
