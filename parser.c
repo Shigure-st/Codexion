@@ -17,7 +17,7 @@ int parse_int(char *arg, int *target)
   int val;
 
   val = atoi(arg);
-  if(val != 0)
+  if(val >= 0)
     return (*target = val, 0);
   return 1;
 }

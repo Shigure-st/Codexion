@@ -315,8 +315,17 @@ void	*simulate(void* arg)
 	struct s_Coder	*coder;
   int i;
 
-  i = 0;
 	coder = arg;
+  coder->last_compile_time = get_time_in_ms();
+  if (coder->right_dongle == coder->left_dongle)
+  {
+    pthread_mutex_lock(&(coder->local_mutex));
+    while (!coder->shared_ctx->stop_flag)
+      pthread_cond_wait(&(coder->check_compile_cond), &(coder->local_mutex));
+    pthread_mutex_unlock(&(coder->local_mutex));
+    return NULL;
+  }
+  i = 0;
   while(i < coder->shared_ctx->required)
   {
     acquire_dongles(coder);
@@ -330,7 +339,6 @@ void	*simulate(void* arg)
   coder->is_complete = true;
   if (check_complete(coder->shared_ctx))
     pthread_cond_broadcast(&(coder->shared_ctx->queue->not_empty));
-
   return NULL;
 
 
