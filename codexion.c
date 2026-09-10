@@ -329,9 +329,12 @@ void	*simulate(void* arg)
   while(i < coder->shared_ctx->required)
   {
     acquire_dongles(coder);
-    is_compile(coder);
-    is_debug(coder);
-    is_refactor(coder);
+    if (coder->shared_ctx->stop_flag || is_compile(coder) == -1)
+      break;
+    if (coder->shared_ctx->stop_flag || is_debug(coder) == -1)
+      break;
+    if (coder->shared_ctx->stop_flag || is_refactor(coder) == -1)
+      break;
     printf("Coder:%d compile number:%d\n", coder->number, i + 1);
     i++;
   }
