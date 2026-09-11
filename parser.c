@@ -67,6 +67,8 @@ int parse_args(int argc, char **argv, t_Args *args)
     return (fprintf(stderr, "Error:Invalid integer arguments\n"), -1);
   if(parse_char(argv[8], &(args->scheduler)) != 0)
     return (fprintf(stderr, "Error:Invalid string arguments\n"), -1);
+  if (args->coder == 0)
+    return (fprintf(stderr, "Error:Invalid Coder arguments\n"), -1);
 
   // printf("arg1:%d\n", args->coder);
   // printf("arg2:%d\n", args->burnout);
