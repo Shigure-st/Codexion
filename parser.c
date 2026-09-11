@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "codexion.h"
+#include <limits.h>
 
 
 int parse_char(char *arg, char **target)
@@ -12,14 +13,42 @@ int parse_char(char *arg, char **target)
   return 1;
 }
 
+int check_numeric(char *arg)
+{
+  int i;
+
+  if (arg == NULL || arg[0] == '\0')
+      return 0;
+  i = 0;
+  while (arg[i] != '\0')
+  {
+    if (arg[i] < '0' || arg[i] > '9')
+      return 0;
+    i++;
+  }
+  return 1;
+}
+
 int parse_int(char *arg, int *target)
 {
-  int val;
+  long long	num;
+	int			i;
 
-  val = atoi(arg);
-  if(val >= 0)
-    return (*target = val, 0);
-  return 1;
+  if (!check_numeric(arg))
+    return 1;
+	num = 0;
+	i = 0;
+  if (arg[0] == '0' && arg[i + 1] != '\0')
+    return 1;
+	while (arg[i] != '\0')
+	{
+		num = num * 10 + (arg[i] - '0');
+		if (num > INT_MAX)
+			return 1;
+		i++;
+	}
+	*target = (int)num;
+	return 0;
 }
 
 int parse_args(int argc, char **argv, t_Args *args)
