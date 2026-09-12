@@ -1,44 +1,41 @@
 #include <pthread.h>
 #include "codexion.h"
 
-void wakeup_all_thread(t_SharedContext *shared_ctx, int coder)
+void wakeup_all_thread(t_SharedContext *ctx, int coder)
 {
   int i;
 
   i = 0;
   while(i < coder)
   {
-      pthread_cond_broadcast(&(shared_ctx->coders[i].check_compile_cond));
+      pthread_cond_broadcast(&(ctx->coders[i].cond));
       i++;
   }
-  // pthread_cond_broadcast(&(shared_ctx->boss->shared_ctx->cond));
 }
 
-int run_simulation(t_SharedContext *shared_ctx)
+int run_simulation(t_SharedContext *ctx)
 {
   int i;
   int j;
+  t_Coder *coder;
 
   i = 0;
-  // if (pthread_create(&shared_ctx->boss->t_Boss, NULL, receive_from_coder, shared_ctx->boss) != 0
-  //    || pthread_create(&shared_ctx->monitor->t_Monitor, NULL, check_burnout, shared_ctx->monitor) != 0)
-  //   return -1;
-  if (pthread_create(&shared_ctx->monitor->t_Monitor, NULL, check_burnout, shared_ctx->monitor) != 0)
+  if (pthread_create(&ctx->mon->th, NULL, check_burnout, ctx->mon) != 0)
     return -1;
-  while(i < shared_ctx->coder)
+  while(i < ctx->coder)
   {
-    if (pthread_create(&shared_ctx->coders[i].t_Coder, NULL, simulate, &shared_ctx->coders[i]) != 0)
+    coder = &ctx->coders[i];
+    if (pthread_create(&coder->th, NULL, simulate, coder) != 0)
     {
-      shared_ctx->stop_flag = true;
-      wakeup_all_thread(shared_ctx, i);
+      ctx->stop_flag = true;
+      wakeup_all_thread(ctx, i);
       break;
     }
     i++;
   }
   j = 0;
   while(j < i)
-    pthread_join(shared_ctx->coders[j++].t_Coder, NULL);
-  // pthread_join(shared_ctx->boss->t_Boss, NULL);
-  pthread_join(shared_ctx->monitor->t_Monitor, NULL);
+    pthread_join(ctx->coders[j++].th, NULL);
+  pthread_join(ctx->mon->th, NULL);
   return 0;
 }

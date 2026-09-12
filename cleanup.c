@@ -1,72 +1,72 @@
 #include "codexion.h"
 #include <stdlib.h>
 
-static void cleanup_dongles(t_SharedContext *shared_ctx)
+static void cleanup_dongles(t_SharedContext *ctx)
 {
   int i;
 
   i = 0;
-  if(shared_ctx->dongles != NULL)
+  if(ctx->dongles != NULL)
   {
-    while(i < shared_ctx->coder)
+    while(i < ctx->coder)
     {
-      pthread_mutex_destroy(&shared_ctx->dongles[i].dongle_lock);
+      pthread_mutex_destroy(&ctx->dongles[i].lock);
       i++;
     }
-    free(shared_ctx->dongles);
-    shared_ctx->dongles = NULL;
+    free(ctx->dongles);
+    ctx->dongles = NULL;
   }
 }
 
-static void cleanup_boss(t_SharedContext *shared_ctx)
+// static void cleanup_boss(t_SharedContext *shared_ctx)
+// {
+//   if (shared_ctx->boss != NULL)
+//   {
+//     pthread_mutex_destroy(&shared_ctx->boss->request_mutex);
+//     free(shared_ctx->boss);
+//     shared_ctx->boss = NULL;
+//   }
+// }
+
+static void cleanup_monitor(t_SharedContext *ctx)
 {
-  if (shared_ctx->boss != NULL)
+  if (ctx->mon != NULL)
   {
-    pthread_mutex_destroy(&shared_ctx->boss->request_mutex);
-    free(shared_ctx->boss);
-    shared_ctx->boss = NULL;
+    pthread_mutex_destroy(&ctx->mon->lock);
+    free(ctx->mon);
+    ctx->mon = NULL;
   }
 }
 
-static void cleanup_monitor(t_SharedContext *shared_ctx)
-{
-  if (shared_ctx->monitor != NULL)
-  {
-    pthread_mutex_destroy(&shared_ctx->monitor->burnout_mutex);
-    free(shared_ctx->monitor);
-    shared_ctx->monitor = NULL;
-  }
-}
-
-static void cleanup_coders(t_SharedContext *shared_ctx)
+static void cleanup_coders(t_SharedContext *ctx)
 {
   int i;
 
   i = 0;
-  if (shared_ctx->coders != NULL)
+  if (ctx->coders != NULL)
   {
-    while(i < shared_ctx->coder)
+    while(i < ctx->coder)
     {
-      pthread_cond_destroy(&shared_ctx->coders[i].check_compile_cond);
-      pthread_mutex_destroy(&shared_ctx->coders[i].local_mutex);
+      pthread_cond_destroy(&ctx->coders[i].cond);
+      pthread_mutex_destroy(&ctx->coders[i].lock);
       i++;
     }
-    free(shared_ctx->coders);
-    shared_ctx->coders = NULL;
+    free(ctx->coders);
+    ctx->coders = NULL;
   }
 }
-static void cleanup_heapqueue(t_SharedContext *shared_ctx)
+static void cleanup_heapqueue(t_SharedContext *ctx)
 {
-  free_heapqueue(shared_ctx);
+  int i;
 
-  // if (shared_ctx->queue != NULL)
-  // {
-  //   pthread_cond_destroy(&shared_ctx->queue->not_empty);
-  //   if (shared_ctx->queue->arr != NULL)
-  //     free(shared_ctx->queue->arr);
-  //   free(shared_ctx->queue);
-  //   shared_ctx->queue = NULL;
-  // }
+  if (ctx == NULL || ctx->dongles == NULL)
+    return;
+  i = 0;
+  while (i < ctx->coder)
+  {
+    free_dongle_heap(&ctx->dongles[i]);
+    i++;
+  }
 }
 
 // static void cleanup_queue(t_SharedContext *shared_ctx)
@@ -81,16 +81,16 @@ static void cleanup_heapqueue(t_SharedContext *shared_ctx)
 //   }
 // }
 
-int  cleanup_context(t_SharedContext *shared_ctx)
+int  cleanup_context(t_SharedContext *ctx)
 {
-  if (shared_ctx == NULL)
+  if (ctx == NULL)
     return -1;
-  pthread_cond_destroy(&shared_ctx->cond);
-  cleanup_heapqueue(shared_ctx);
-  cleanup_dongles(shared_ctx);
-  cleanup_boss(shared_ctx);
-  cleanup_coders(shared_ctx);
-  // cleanup_queue(shared_ctx);
-  cleanup_monitor(shared_ctx);
+  pthread_cond_destroy(&ctx->cond);
+  cleanup_dongles(ctx);
+  cleanup_heapqueue(ctx);
+  // cleanup_boss(ctx);
+  cleanup_coders(ctx);
+  // cleanup_queue(ctx);
+  cleanup_monitor(ctx);
   return -1;
 }

@@ -58,13 +58,13 @@ struct s_Data
   int  priority;
 };
 
-struct s_Boss
-{
-	pthread_t	      t_Boss;
-  pthread_mutex_t request_mutex;
-  bool            request_flag;
-	struct s_SharedContext	*shared_ctx;
-};
+// struct s_Boss
+// {
+// 	pthread_t	      t_Boss;
+//   pthread_mutex_t request_mutex;
+//   bool            request_flag;
+// 	struct s_SharedContext	*shared_ctx;
+// };
 
 struct s_SharedContext
 {
@@ -82,47 +82,47 @@ struct s_SharedContext
 	t_Dongle	*dongles;
 	t_Coder		*coders;
   t_Queue  *queue;
-  t_Boss    *boss;
-  t_Monitor    *monitor;
+  // t_Boss    *boss;
+  t_Monitor    *mon;
   pthread_cond_t  cond;
 };
 
 struct s_Dongle
 {
 	int				i;
-	pthread_mutex_t dongle_lock;
-	bool			available;
-  long long cooldown_end_time;
-  pthread_cond_t  *coder_cond;
+	pthread_mutex_t lock;
+	bool			free;
+  long long t_end;
+  pthread_cond_t  *cond;
   struct timespec  ts;
-  t_Heap *wait_coders;
+  t_Heap *waiters;
 };
 
 struct s_Coder
 {
-	int				number;
-	bool			is_compile;
-  bool      wait_cond;
-  bool      is_complete;
-  long      last_compile_time;
-	pthread_t	t_Coder;
-  pthread_cond_t  check_compile_cond;
-	pthread_mutex_t local_mutex;
+	int				id;
+	bool			is_comp;
+  bool      wait;
+  bool      done;
+  long      t_last;
+	pthread_t	th;
+  pthread_cond_t  cond;
+	pthread_mutex_t lock;
   struct timeval  tv;
   struct timespec  ts;
-	struct s_Dongle	*right_dongle;
-	struct s_Dongle	*left_dongle;
-  struct s_Monitor *monitor;
-  struct s_Boss *boss;
-	struct s_SharedContext	*shared_ctx;
+	struct s_Dongle	*r_dongle;
+	struct s_Dongle	*l_dongle;
+  struct s_Monitor *mon;
+  // struct s_Boss *boss;
+	struct s_SharedContext	*ctx;
 };
 
 struct s_Monitor
 {
-	pthread_t	      t_Monitor;
-  pthread_mutex_t burnout_mutex;
+	pthread_t	      th;
+  pthread_mutex_t lock;
   struct timeval  tv;
-	struct s_SharedContext	*shared_ctx;
+	struct s_SharedContext	*ctx;
 };
 
 
@@ -155,5 +155,10 @@ int heap_pop(t_Dongle *dongle);
 void heap_push(t_Dongle *dongle, t_Coder *coder);
 bool  is_empty_and_free(t_Dongle *dongle);
 int alloc_heapqueue(t_SharedContext *shared_ctx);
+void free_dongle_heap(t_Dongle *d);
+void acquire_dongles(t_Coder *coder);
+struct timespec wakeup_time(t_Coder *coder);
+bool try_to_acquire(t_Coder *coder);
+bool  check_complete(t_SharedContext *shared_ctx);
 
 #endif

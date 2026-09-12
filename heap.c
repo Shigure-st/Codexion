@@ -5,35 +5,29 @@
 #include <string.h>
 #include "codexion.h"
 
-// typedef struct s_Data t_Data;
-// typedef struct s_HeapData t_HeapData;
-// typedef struct s_Queue t_Queue;
-//
-// typedef struct s_Heap t_Heap;
-//
-// struct s_HeapData
-// {
-//   int  data;
-// };
-//
-// struct s_Heap
-// {
-//   t_HeapData  *data;
-//   int     size;
-//   int     capa;
-// };
-//
-bool  is_empty_and_free(t_Dongle *dongle)
-{
-  bool empty_and_free;
 
-  pthread_mutex_lock(&(dongle->dongle_lock));
-  empty_and_free = (dongle->available && dongle->wait_coders->size == 0);
-  pthread_mutex_unlock(&(dongle->dongle_lock));
-  return empty_and_free;
+void free_dongle_heap(t_Dongle *d)
+{
+  if (d == NULL || d->waiters == NULL)
+    return;
+  if (d->waiters->data != NULL)
+  {
+    free(d->waiters->data);
+    d->waiters->data = NULL;
+  }
+  free(d->waiters);
+  d->waiters = NULL;
 }
 
-// bool ft_heap_peek(t_Dongle *dongle, t_)
+// bool  is_empty_and_free(t_Dongle *dongle)
+// {
+//   bool empty_and_free;
+//
+//   pthread_mutex_lock(&(dongle->lock));
+//   empty_and_free = (dongle->free && dongle->waiters->size == 0);
+//   pthread_mutex_unlock(&(dongle->lock));
+//   return empty_and_free;
+// }
 
 static void shift_up(t_Heap *queue)
 {
@@ -104,7 +98,7 @@ int heap_pop(t_Dongle *dongle)
 {
   t_Heap *queue;
 
-  queue = dongle->wait_coders;
+  queue = dongle->waiters;
   if (queue->size == 0)
   {
     printf("queue is emptyh\n");
@@ -115,9 +109,9 @@ int heap_pop(t_Dongle *dongle)
   queue->data[0] = queue->data[queue->size];
   shift_down(queue);
   if (queue->size > 0)
-    dongle->coder_cond = &queue->data[0].coder->check_compile_cond;
+    dongle->cond = &queue->data[0].coder->cond;
   else
-    dongle->coder_cond = NULL;
+    dongle->cond = NULL;
   return 0;
 }
 
@@ -125,157 +119,37 @@ void heap_push(t_Dongle *dongle, t_Coder *coder)
 {
   t_Heap *queue;
 
-  pthread_mutex_lock(&(dongle->dongle_lock));
-  queue = dongle->wait_coders;
+  pthread_mutex_lock(&(dongle->lock));
+  queue = dongle->waiters;
   queue->data[queue->size].coder = coder;
-  if (strcmp(coder->shared_ctx->scheduler, "fifo") == 0)
-    queue->data[queue->size].priority = coder->shared_ctx->next_seq++;
+  if (strcmp(coder->ctx->scheduler, "fifo") == 0)
+    queue->data[queue->size].priority = coder->ctx->next_seq++;
   else
-    queue->data[queue->size].priority = coder->last_compile_time;
+    queue->data[queue->size].priority = coder->t_last;
   shift_up(queue);
   queue->size++;
   if (queue->data[0].coder == coder)
-    dongle->coder_cond = &coder->check_compile_cond;
-  pthread_mutex_unlock(&(dongle->dongle_lock));
+    dongle->cond = &coder->cond;
+  pthread_mutex_unlock(&(dongle->lock));
 
 }
 
-// void heap_push(t_Heap *queue, t_HeapData *push_data)
-// {
-//   queue->data[queue->size] = *push_data;
-//   shift_up(queue);
-//   queue->size++;
-// }
+int alloc_heapqueue(t_SharedContext *ctx)
+{
+  int i;
+  t_Dongle *d;
 
-
-// int main(void)
-// {
-//     t_Heap heap;
-//     t_HeapData input;
-//     t_HeapData ret;
-//
-//     int values[] = {6, 5, 4, 3, 2, 1};
-//     int count = sizeof(values) / sizeof(values[0]);
-//
-//     heap.capa = count;
-//     heap.size = 0;
-//     heap.data = malloc(sizeof(t_HeapData) * heap.capa);
-//
-//     if (heap.data == NULL)
-//         return 1;
-//
-//     /* push */
-//     for (int i = 0; i < count; i++)
-//     {
-//         input.data = values[i];
-//         heap_push(&heap, &input);
-//     }
-//
-//     printf("Heap after push:\n");
-//     for (int i = 0; i < heap.size; i++)
-//         printf("%d ", heap.data[i].data);
-//     printf("\n");
-//
-//     /* pop */
-//     printf("Pop order:\n");
-//     while (heap.size > 0)
-//     {
-//         if (heap_pop(&heap, &ret) == -1)
-//         {
-//             printf("pop failed\n");
-//             break;
-//         }
-//
-//         printf("%d ", ret.data);
-//     }
-//     printf("\n");
-//
-//     free(heap.data);
-//
-//     return 0;
-// }
-
-
-
-
-
-
-
-
-
-// struct s_Queue
-// {
-//   struct s_Data *arr;
-//   int           tail;
-//   int           head;
-//   int        size;
-// };
-//
-// struct s_Data
-// {
-//   int  data;
-//   int     priority;
-// };
-//
-// void  enqueue(t_Queue *queue, int  element) {
-//   if(((queue->tail) + 2) % queue->size == queue->head)
-//   {
-//     printf("Queue is full so can't ENQUEUE\n");
-//     return;
-//
-//   }
-//   queue->arr[(queue->tail + 1) % queue->size].data = element;
-//   queue->tail = (queue->tail + 1) % queue->size;
-//   printf("[DEBUG]heap queue:%d\n", queue->arr[(queue->tail) % queue->size].data);
-//   printf("[DEBUG]tail:%d\n", queue->tail);
-// }
-//
-// int  dequeue(t_Queue *queue)
-// {
-//   int ret;
-//
-//   if((queue->tail + 1) % queue->size == queue->head)
-//   {
-//     printf("Queue is empty\n");
-//     return -1;
-//   }
-//   ret = queue->arr[queue->head].data;
-//   queue->head = (queue->head + 1) % queue->size;
-//   return ret;
-//
-// }
-//
-// int main()
-// {
-//     struct s_Data dates[6] = {0};
-//     // struct s_Data dates[5] = {
-//     //     {1, 1},
-//     //     {2, 2},
-//     //     {3, 3},
-//     //     {4, 4},
-//     //     {5, 5}
-//     // };
-//
-//     struct  s_Queue heap_queue;
-//     heap_queue.arr = dates;
-//     heap_queue.size = 6;
-//     heap_queue.head = 0;
-//     heap_queue.tail = -1;
-//
-//     enqueue(&heap_queue, 1);
-//     enqueue(&heap_queue, 2);
-//     enqueue(&heap_queue, 3);
-//     enqueue(&heap_queue, 4);
-//     enqueue(&heap_queue, 5);
-//     printf("heap queue1:%d\n", heap_queue.arr[heap_queue.head % heap_queue.size].data);
-//     printf("heap queue2:%d\n", heap_queue.arr[(heap_queue.head + 1) % heap_queue.size].data);
-//     printf("heap queue3:%d\n", heap_queue.arr[(heap_queue.head + 2) % heap_queue.size].data);
-//     printf("heap queue4:%d\n", heap_queue.arr[(heap_queue.head + 3) % heap_queue.size].data);
-//     printf("heap queue5:%d\n", heap_queue.arr[(heap_queue.head + 4) % heap_queue.size].data);
-//     printf("heap size:%d\n", heap_queue.size);
-//
-//     enqueue(&heap_queue, 10);
-//     printf("queue5:%d\n", heap_queue.arr[4].data);
-//     printf("DEQUEUE:%d\n", dequeue(&heap_queue));
-//
-// }
+  i = 0;
+  while (i < ctx->coder)
+  {
+    d = &ctx->dongles[i];
+    d->waiters = malloc(sizeof(t_Heap));
+    if (d->waiters == NULL)
+      return (cleanup_context(ctx));
+    d->waiters->data = malloc(sizeof(t_HeapData) * 2);
+    if (d->waiters->data == NULL)
+      return (cleanup_context(ctx));
+    i++;
+  }
+  return 0;
+}

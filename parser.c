@@ -53,10 +53,8 @@ int parse_int(char *arg, int *target)
 
 int parse_args(int argc, char **argv, t_Args *args)
 {
-
   if(argc != 9)
     return (fprintf(stderr, "Error:Invalid arguments\n"), -1);
-
   if(parse_int(argv[1], &(args->coder)) != 0
      || parse_int(argv[2], &(args->burnout)) != 0
      || parse_int(argv[3], &(args->compile)) != 0
@@ -69,15 +67,5 @@ int parse_args(int argc, char **argv, t_Args *args)
     return (fprintf(stderr, "Error:Invalid string arguments\n"), -1);
   if (args->coder == 0)
     return (fprintf(stderr, "Error:Invalid Coder arguments\n"), -1);
-
-  // printf("arg1:%d\n", args->coder);
-  // printf("arg2:%d\n", args->burnout);
-  // printf("arg3:%d\n", args->compile);
-  // printf("arg4:%d\n", args->debug);
-  // printf("arg5:%d\n", args->refactor);
-  // printf("arg6:%d\n", args->required);
-  // printf("arg7:%d\n", args->cooldown);
-  // printf("arg8:%s\n", args->scheduler);
-
   return 0;
 }

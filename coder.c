@@ -3,26 +3,27 @@
 #include <pthread.h>
 #include "codexion.h"
 
+#include <stdio.h>
 
-static int init_coder_struct(t_SharedContext *shared_ctx, int i)
+
+static void init_coder_struct(t_SharedContext *ctx, int i)
 {
-  shared_ctx->coders[i].number = i + 1;
-  shared_ctx->coders[i].shared_ctx = shared_ctx;
-  shared_ctx->coders[i].is_compile = false;
-  shared_ctx->coders[i].wait_cond = false;
-  shared_ctx->coders[i].left_dongle = &shared_ctx->dongles[i];
-  shared_ctx->coders[i].boss = shared_ctx->boss;
-  shared_ctx->coders[i].monitor = shared_ctx->monitor;
-  shared_ctx->coders[i].is_complete = false;
-  shared_ctx->coders[i].last_compile_time = 0;
-  if (i == shared_ctx->coder - 1)
-    shared_ctx->coders[i].right_dongle = &shared_ctx->dongles[0];
+  ctx->coders[i].id = i + 1;
+  ctx->coders[i].ctx = ctx;
+  ctx->coders[i].is_comp = false;
+  ctx->coders[i].wait = false;
+  ctx->coders[i].l_dongle = &ctx->dongles[i];
+  // ctx->coders[i].boss = ctx->boss;
+  ctx->coders[i].mon = ctx->mon;
+  ctx->coders[i].done = false;
+  ctx->coders[i].t_last = 0;
+  if (i == ctx->coder - 1)
+    ctx->coders[i].r_dongle = &ctx->dongles[0];
   else
-    shared_ctx->coders[i].right_dongle = &shared_ctx->dongles[i + 1];
-  return 0;
+    ctx->coders[i].r_dongle = &ctx->dongles[i + 1];
 }
 
-int init_coder_mutex(t_SharedContext *shared_ctx)
+int init_coder_mutex(t_SharedContext *ctx)
 {
   int i;
   int j;
@@ -30,46 +31,90 @@ int init_coder_mutex(t_SharedContext *shared_ctx)
 
   i = 0;
   k = 0;
-  while (i < shared_ctx->coder)
+  while (i < ctx->coder)
   {
-    if (pthread_mutex_init(&shared_ctx->coders[i].local_mutex, NULL) != 0)
+    if (pthread_mutex_init(&ctx->coders[i].lock, NULL) != 0)
     {
       j = 0;
       while(j < i)
-        pthread_mutex_destroy(&shared_ctx->coders[j++].local_mutex);
-      while(k < shared_ctx->coder)
-        pthread_cond_destroy(&shared_ctx->coders[k++].check_compile_cond);
-      free(shared_ctx->coders);
-      shared_ctx->coders = NULL;
-      return (cleanup_context(shared_ctx));
+        pthread_mutex_destroy(&ctx->coders[j++].lock);
+      while(k < ctx->coder)
+        pthread_cond_destroy(&ctx->coders[k++].cond);
+      free(ctx->coders);
+      ctx->coders = NULL;
+      return (cleanup_context(ctx));
     }
     i++;
   }
   return 0;
 }
 
-int alloc_coder_array(t_SharedContext *shared_ctx)
+int alloc_coder_array(t_SharedContext *ctx)
 {
   int i;
   int j;
 
   i = 0;
-  shared_ctx->coders = malloc(sizeof(t_Coder) * shared_ctx->coder);
-  if (shared_ctx->coders == NULL)
-    return (cleanup_context(shared_ctx));
-  while (i < shared_ctx->coder)
+  ctx->coders = malloc(sizeof(t_Coder) * ctx->coder);
+  if (ctx->coders == NULL)
+    return (cleanup_context(ctx));
+  while (i < ctx->coder)
   {
-	  if(pthread_cond_init(&shared_ctx->coders[i].check_compile_cond, NULL) != 0)
+	  if(pthread_cond_init(&ctx->coders[i].cond, NULL) != 0)
     {
       j = 0;
       while(j < i)
-        pthread_cond_destroy(&shared_ctx->coders[j++].check_compile_cond);
-      free(shared_ctx->coders);
-      shared_ctx->coders = NULL;
-      return (cleanup_context(shared_ctx));
+        pthread_cond_destroy(&ctx->coders[j++].cond);
+      free(ctx->coders);
+      ctx->coders = NULL;
+      return (cleanup_context(ctx));
     }
-    init_coder_struct(shared_ctx, i);
+    init_coder_struct(ctx, i);
     i++;
   }
   return 0;
+}
+
+int coder_cycle(t_Coder *coder)
+{
+  acquire_dongles(coder);
+  if (coder->ctx->stop_flag || is_compile(coder) == -1)
+    return 1;
+  if (coder->ctx->stop_flag || is_debug(coder) == -1)
+    return 1;
+  if (coder->ctx->stop_flag || is_refactor(coder) == -1)
+    return 1;
+  return 0;
+
+}
+
+void	*simulate(void* arg)
+{
+	struct s_Coder	*coder;
+  int i;
+
+	coder = arg;
+  coder->t_last = get_time_in_ms();
+  if (coder->r_dongle == coder->l_dongle)
+  {
+    pthread_mutex_lock(&(coder->lock));
+    while (!coder->ctx->stop_flag)
+      pthread_cond_wait(&(coder->cond), &(coder->lock));
+    pthread_mutex_unlock(&(coder->lock));
+    return NULL;
+  }
+  i = 0;
+  while(i < coder->ctx->required)
+  {
+    if (coder_cycle(coder))
+        break;
+    printf("Coder:%d compile number:%d\n", coder->id, i + 1);
+    i++;
+  }
+  printf("compile complete\n");
+  coder->done = true;
+  if (check_complete(coder->ctx))
+    wakeup_all_thread(coder->ctx, coder->ctx->coder);
+  //   pthread_cond_broadcast(&(coder->shared_ctx->queue->not_empty));
+  return NULL;
 }
