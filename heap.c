@@ -19,16 +19,6 @@ void free_dongle_heap(t_Dongle *d)
   d->waiters = NULL;
 }
 
-// bool  is_empty_and_free(t_Dongle *dongle)
-// {
-//   bool empty_and_free;
-//
-//   pthread_mutex_lock(&(dongle->lock));
-//   empty_and_free = (dongle->free && dongle->waiters->size == 0);
-//   pthread_mutex_unlock(&(dongle->lock));
-//   return empty_and_free;
-// }
-
 static void shift_up(t_Heap *queue)
 {
   int parent;
@@ -63,8 +53,8 @@ static int get_min_child(t_Heap *queue, int left, int right)
 static void shift_down(t_Heap *queue)
 {
   int parent;
-  t_HeapData tmp;
   int child;
+  t_HeapData tmp;
 
   parent = 0;
   while((parent * 2) + 1 < queue->size)
@@ -104,7 +94,6 @@ int heap_pop(t_Dongle *dongle)
     printf("queue is emptyh\n");
     return -1;
   }
-  // *ret = queue->data[0];
   queue->size--;
   queue->data[0] = queue->data[queue->size];
   shift_down(queue);

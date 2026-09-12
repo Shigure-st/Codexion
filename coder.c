@@ -115,6 +115,5 @@ void	*simulate(void* arg)
   coder->done = true;
   if (check_complete(coder->ctx))
     wakeup_all_thread(coder->ctx, coder->ctx->coder);
-  //   pthread_cond_broadcast(&(coder->shared_ctx->queue->not_empty));
   return NULL;
 }

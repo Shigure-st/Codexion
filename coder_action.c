@@ -55,40 +55,25 @@ int	is_compile(t_Coder *coder)
 {
   long  total_usec;
   long  remainder_usec;
-  // long   time;
 
   coder->t_last = get_time_in_ms();
-  // pthread_mutex_lock(&(coder->right_dongle->dongle_lock));
-  // pthread_mutex_lock(&(coder->left_dongle->dongle_lock));
 
   gettimeofday(&coder->tv, NULL);
   pthread_mutex_lock(&(coder->mon->lock));
   pthread_mutex_unlock(&(coder->mon->lock));
-  // time = coder->tv.tv_sec;
   total_usec = coder->tv.tv_usec + (coder->ctx->compile * 1000);
   coder->ts.tv_sec = coder->tv.tv_sec + (total_usec / 1000000);
   remainder_usec = total_usec % 1000000;
   coder->ts.tv_nsec = remainder_usec * 1000;
-  // printf("test time%ld\n", time);
 
   pthread_mutex_lock(&(coder->lock));
   pthread_cond_timedwait(&coder->cond, &coder->lock, &coder->ts);
   pthread_mutex_unlock(&coder->lock);
-  // printf("コンパイルにかかった秒数:%ld\n", ((long)coder->ts.tv_sec - time));
-  // // printf("マイクロ秒:%ld\n", (long)coder->tv.tv_usec);
-  //
-  // printf("Coder Number:%d\n", coder->number);
-  // printf("Coder %d, RightHandDongle:%p\n", coder->number, (void *)&coder->right_dongle->dongle_lock);
-  // printf("Coder %d, LeftHandDongle:%p\n", coder->number, (void *)&coder->left_dongle->dongle_lock);
-  // printf("Coder %d:Now Compile....\n", coder->number);
   pthread_mutex_lock(&(coder->r_dongle->lock));
   pthread_mutex_lock(&(coder->l_dongle->lock));
   printf("[DEBUG] coder compile coder:%d\n", coder->id);
   coder->r_dongle->t_end = get_time_in_ms() + coder->ctx->cooldown;
   coder->l_dongle->t_end = get_time_in_ms() + coder->ctx->cooldown;
-  // pthread_mutex_unlock(&coder->right_dongle->dongle_lock);
-  // pthread_mutex_unlock(&coder->left_dongle->dongle_lock);
-  // pthread_mutex_lock(&(coder->boss->request_mutex));
   (coder->r_dongle->free) = true;
   (coder->l_dongle->free) = true;
   pthread_mutex_unlock(&coder->r_dongle->lock);
@@ -97,8 +82,6 @@ int	is_compile(t_Coder *coder)
     pthread_cond_broadcast(coder->r_dongle->cond);
   if (coder->l_dongle->cond != NULL)
     pthread_cond_broadcast(coder->l_dongle->cond);
-  // pthread_cond_broadcast(&(coder->boss->shared_ctx->cond));
-  // pthread_mutex_unlock(&(coder->boss->request_mutex));
   if (coder->ctx->stop_flag)
     return -1;
   return 0;

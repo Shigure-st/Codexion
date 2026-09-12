@@ -4,16 +4,14 @@ CFLAGS	= -Wall -Wextra -Werror -pthread
 TARGET	= Codexion
 SRCS			=  main.c \
 					 parser.c \
-					 boss.c \
 					 coder.c \
 					 context.c \
 					 dongle.c \
-					 queue.c \
 					 simulate.c \
 					 codexion.c \
 					 monitor.c \
 					 heap.c \
-					 human_action.c \
+					 coder_action.c \
 					 time.c \
 					 cleanup.c
 
@@ -30,4 +28,9 @@ $(TARGET): $(OBJS)
 clean:
 				rm -f $(OBJS)
 
-.PHONY: all clean
+fclean: clean
+				rm -f $(TARGET)
+
+re: fclean all
+
+.PHONY: all clean fclean re

@@ -17,9 +17,7 @@ static int init_shared_context(t_Args *args, t_SharedContext *ctx)
   ctx->next_seq = 0;
   ctx->stop_flag = false;
   ctx->dongles = NULL;
-  // ctx->boss = NULL;
   ctx->coders = NULL;
-  ctx->queue = NULL;
   ctx->mon = NULL;
   return 0;
 }
@@ -30,7 +28,6 @@ int init_context(t_Args *args, t_SharedContext *ctx)
      || alloc_dongle_array(ctx) != 0
      || alloc_monitor(ctx) != 0
      || alloc_coder_array(ctx) != 0
-     // || alloc_queue(ctx) != 0
      || alloc_heapqueue(ctx) != 0
      || init_coder_mutex(ctx) != 0)
     return -1;

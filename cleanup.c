@@ -18,16 +18,6 @@ static void cleanup_dongles(t_SharedContext *ctx)
   }
 }
 
-// static void cleanup_boss(t_SharedContext *shared_ctx)
-// {
-//   if (shared_ctx->boss != NULL)
-//   {
-//     pthread_mutex_destroy(&shared_ctx->boss->request_mutex);
-//     free(shared_ctx->boss);
-//     shared_ctx->boss = NULL;
-//   }
-// }
-
 static void cleanup_monitor(t_SharedContext *ctx)
 {
   if (ctx->mon != NULL)
@@ -69,18 +59,6 @@ static void cleanup_heapqueue(t_SharedContext *ctx)
   }
 }
 
-// static void cleanup_queue(t_SharedContext *shared_ctx)
-// {
-//   if (shared_ctx->queue != NULL)
-//   {
-//     pthread_cond_destroy(&shared_ctx->queue->not_empty);
-//     if (shared_ctx->queue->arr != NULL)
-//       free(shared_ctx->queue->arr);
-//     free(shared_ctx->queue);
-//     shared_ctx->queue = NULL;
-//   }
-// }
-
 int  cleanup_context(t_SharedContext *ctx)
 {
   if (ctx == NULL)
@@ -88,9 +66,7 @@ int  cleanup_context(t_SharedContext *ctx)
   pthread_cond_destroy(&ctx->cond);
   cleanup_dongles(ctx);
   cleanup_heapqueue(ctx);
-  // cleanup_boss(ctx);
   cleanup_coders(ctx);
-  // cleanup_queue(ctx);
   cleanup_monitor(ctx);
   return -1;
 }
