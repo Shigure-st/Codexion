@@ -151,6 +151,7 @@ void  set_stop_flag(t_SharedContext *ctx);
 void  update_last_compile_time(t_Coder *coder);
 void output_log(t_SharedContext *ctx, int id, const char* message);
 long long get_time_in_ms(void);
+long long get_last_compile_time(t_Coder *coder);
 struct timespec wakeup_time(t_Coder *coder);
 struct timespec ms_to_timespec(long long ms);
 

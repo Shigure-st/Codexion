@@ -107,6 +107,7 @@ int heap_pop(t_Dongle *dongle)
 void heap_push(t_Dongle *dongle, t_Coder *coder)
 {
   t_Heap *queue;
+  long long t;
 
   pthread_mutex_lock(&(dongle->lock));
   queue = dongle->waiters;
@@ -114,13 +115,15 @@ void heap_push(t_Dongle *dongle, t_Coder *coder)
   if (strcmp(coder->ctx->scheduler, "fifo") == 0)
     queue->data[queue->size].priority = coder->ctx->next_seq++;
   else
-    queue->data[queue->size].priority = coder->t_last;
+  {
+    t = get_last_compile_time(coder);
+    queue->data[queue->size].priority = t + coder->ctx->burnout;
+  }
   shift_up(queue);
   queue->size++;
   if (queue->data[0].coder == coder)
     dongle->cond = &coder->cond;
   pthread_mutex_unlock(&(dongle->lock));
-
 }
 
 int alloc_heapqueue(t_SharedContext *ctx)
