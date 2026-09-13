@@ -68,11 +68,15 @@ struct s_SharedContext
   char            *scheduler;
   bool		        is_active;
   bool		        stop_flag;
+  bool		        is_lock;
+  bool		        is_log_lock;
+  bool		        is_cond;
 	t_Dongle	      *dongles;
 	t_Coder		      *coders;
   t_Monitor       *mon;
   long long       next_seq;
 	pthread_mutex_t lock;
+	pthread_mutex_t log_lock;
   pthread_cond_t  cond;
 };
 

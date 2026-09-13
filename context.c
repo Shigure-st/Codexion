@@ -2,15 +2,25 @@
 #include <pthread.h>
 #include "codexion.h"
 
-static int init_shared_context(t_Args *args, t_SharedContext *ctx)
+
+static int init_cond_mutex(t_Args *args, t_SharedContext *ctx)
 {
+  ctx->is_cond = false;
+  ctx->is_lock = false;
+  ctx->is_log_lock = false;
 	if(pthread_cond_init(&ctx->cond, NULL) != 0)
-      return -1;
-  if (pthread_mutex_init(&ctx->lock, NULL) != 0)
-  {
-    pthread_cond_destroy(&ctx->cond);
     return -1;
-  }
+  ctx->is_cond = true;
+  if (pthread_mutex_init(&ctx->lock, NULL) != 0)
+    return -1;
+  ctx->is_lock = true;
+  if (pthread_mutex_init(&ctx->log_lock, NULL) != 0)
+    return -1;
+  ctx->is_log_lock = true;
+  return 0;
+}
+static void init_share_value(t_Args *args, t_SharedContext *ctx)
+{
   ctx->coder = args->coder;
   ctx->burnout = args->burnout;
   ctx->compile = args->compile;
@@ -24,6 +34,12 @@ static int init_shared_context(t_Args *args, t_SharedContext *ctx)
   ctx->dongles = NULL;
   ctx->coders = NULL;
   ctx->mon = NULL;
+}
+static int init_shared_context(t_Args *args, t_SharedContext *ctx)
+{
+  if (init_cond_mutex(args, ctx) != 0)
+    return -1;
+  init_share_value(args, ctx);
   return 0;
 }
 
