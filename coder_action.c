@@ -17,74 +17,54 @@ void output_log(t_SharedContext *ctx, int id, const char* message)
   pthread_mutex_unlock(&ctx->log_lock);
 }
 
-int	is_debug(t_Coder *coder)
+void set_coder_sleep(t_Coder *coder)
 {
   long  total_usec;
   long  remainder_usec;
-  // long   time;
 
-  output_log(coder->ctx, coder->id, "is debugging");
   gettimeofday(&coder->tv, NULL);
-  // time = coder->tv.tv_sec;
   total_usec = coder->tv.tv_usec + (coder->ctx->debug * 1000);
   coder->ts.tv_sec = coder->tv.tv_sec + (total_usec / 1000000);
   remainder_usec = total_usec % 1000000;
   coder->ts.tv_nsec = remainder_usec * 1000;
-	// printf("Coder %d:Now Debug....\n", coder->number);
+}
+
+int	is_debug(t_Coder *coder)
+{
+  output_log(coder->ctx, coder->id, "is debugging");
+  set_coder_sleep(coder);
   pthread_mutex_lock(&(coder->lock));
   pthread_cond_timedwait(&coder->cond, &coder->lock, &coder->ts);
   pthread_mutex_unlock(&coder->lock);
   if (is_stopped(coder->ctx))
     return -1;
-  // printf("デバックにかかった秒数:%ld\n", ((long)coder->ts.tv_sec - time));
   return 0;
 }
 
 int	is_refactor(t_Coder *coder)
 {
-  long  total_usec;
-  long  remainder_usec;
-  // long   time;
-
   output_log(coder->ctx, coder->id, "is refactoring");
-  gettimeofday(&coder->tv, NULL);
-  // time = coder->tv.tv_sec;
-  total_usec = coder->tv.tv_usec + (coder->ctx->refactor * 1000);
-  coder->ts.tv_sec = coder->tv.tv_sec + (total_usec / 1000000);
-  remainder_usec = total_usec % 1000000;
-  coder->ts.tv_nsec = remainder_usec * 1000;
-	// printf("Coder %d:Now Refactoring....\n", coder->number);
+  set_coder_sleep(coder);
   pthread_mutex_lock(&(coder->lock));
   pthread_cond_timedwait(&coder->cond, &coder->lock, &coder->ts);
   pthread_mutex_unlock(&coder->lock);
   if (is_stopped(coder->ctx))
     return -1;
-  // printf("リファクタリングにかかった秒数:%ld\n", ((long)coder->ts.tv_sec - time));
   return 0;
 }
 
 int	is_compile(t_Coder *coder)
 {
-  long  total_usec;
-  long  remainder_usec;
-
   output_log(coder->ctx, coder->id, "is compiling");
   update_last_compile_time(coder);
-
-  gettimeofday(&coder->tv, NULL);
-  pthread_mutex_lock(&(coder->mon->lock));
-  pthread_mutex_unlock(&(coder->mon->lock));
-  total_usec = coder->tv.tv_usec + (coder->ctx->compile * 1000);
-  coder->ts.tv_sec = coder->tv.tv_sec + (total_usec / 1000000);
-  remainder_usec = total_usec % 1000000;
-  coder->ts.tv_nsec = remainder_usec * 1000;
-
+  set_coder_sleep(coder);
+  // pthread_mutex_lock(&(coder->mon->lock));
+  // pthread_mutex_unlock(&(coder->mon->lock));
   pthread_mutex_lock(&(coder->lock));
   pthread_cond_timedwait(&coder->cond, &coder->lock, &coder->ts);
   pthread_mutex_unlock(&coder->lock);
   pthread_mutex_lock(&(coder->r_dongle->lock));
   pthread_mutex_lock(&(coder->l_dongle->lock));
-  // printf("[DEBUG] coder compile coder:%d\n", coder->id);
   coder->r_dongle->t_end = get_time_in_ms() + coder->ctx->cooldown;
   coder->l_dongle->t_end = get_time_in_ms() + coder->ctx->cooldown;
   (coder->r_dongle->free) = true;
