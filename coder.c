@@ -78,11 +78,11 @@ int alloc_coder_array(t_SharedContext *ctx)
 int coder_cycle(t_Coder *coder)
 {
   acquire_dongles(coder);
-  if (coder->ctx->stop_flag || is_compile(coder) == -1)
+  if (is_stopped(coder->ctx) || is_compile(coder) == -1)
     return 1;
-  if (coder->ctx->stop_flag || is_debug(coder) == -1)
+  if (is_stopped(coder->ctx) || is_debug(coder) == -1)
     return 1;
-  if (coder->ctx->stop_flag || is_refactor(coder) == -1)
+  if (is_stopped(coder->ctx) || is_refactor(coder) == -1)
     return 1;
   return 0;
 
@@ -90,15 +90,15 @@ int coder_cycle(t_Coder *coder)
 
 void	*simulate(void* arg)
 {
-	struct s_Coder	*coder;
+	t_Coder	*coder;
   int i;
 
 	coder = arg;
-  coder->t_last = get_time_in_ms();
+  update_last_compile_time(coder);
   if (coder->r_dongle == coder->l_dongle)
   {
     pthread_mutex_lock(&(coder->lock));
-    while (!coder->ctx->stop_flag)
+    while (!is_stopped(coder->ctx))
       pthread_cond_wait(&(coder->cond), &(coder->lock));
     pthread_mutex_unlock(&(coder->lock));
     return NULL;

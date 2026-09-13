@@ -23,7 +23,7 @@ int	is_debug(t_Coder *coder)
   pthread_mutex_lock(&(coder->lock));
   pthread_cond_timedwait(&coder->cond, &coder->lock, &coder->ts);
   pthread_mutex_unlock(&coder->lock);
-  if (coder->ctx->stop_flag)
+  if (is_stopped(coder->ctx))
     return -1;
   printf("デバックにかかった秒数:%ld\n", ((long)coder->ts.tv_sec - time));
   return 0;
@@ -45,7 +45,7 @@ int	is_refactor(t_Coder *coder)
   pthread_mutex_lock(&(coder->lock));
   pthread_cond_timedwait(&coder->cond, &coder->lock, &coder->ts);
   pthread_mutex_unlock(&coder->lock);
-  if (coder->ctx->stop_flag)
+  if (is_stopped(coder->ctx))
     return -1;
   printf("リファクタリングにかかった秒数:%ld\n", ((long)coder->ts.tv_sec - time));
   return 0;
@@ -56,7 +56,7 @@ int	is_compile(t_Coder *coder)
   long  total_usec;
   long  remainder_usec;
 
-  coder->t_last = get_time_in_ms();
+  update_last_compile_time(coder);
 
   gettimeofday(&coder->tv, NULL);
   pthread_mutex_lock(&(coder->mon->lock));
@@ -82,7 +82,7 @@ int	is_compile(t_Coder *coder)
     pthread_cond_broadcast(coder->r_dongle->cond);
   if (coder->l_dongle->cond != NULL)
     pthread_cond_broadcast(coder->l_dongle->cond);
-  if (coder->ctx->stop_flag)
+  if (is_stopped(coder->ctx))
     return -1;
   return 0;
 }

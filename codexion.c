@@ -30,6 +30,6 @@ bool  check_complete(t_SharedContext *ctx)
       return false;
     i++;
   }
-  ctx->stop_flag = true;
+  set_stop_flag(ctx);
   return true;
 }

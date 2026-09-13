@@ -64,6 +64,7 @@ int  cleanup_context(t_SharedContext *ctx)
   if (ctx == NULL)
     return -1;
   pthread_cond_destroy(&ctx->cond);
+  pthread_mutex_destroy(&ctx->lock);
   cleanup_dongles(ctx);
   cleanup_heapqueue(ctx);
   cleanup_coders(ctx);

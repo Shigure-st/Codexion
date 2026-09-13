@@ -27,7 +27,7 @@ int run_simulation(t_SharedContext *ctx)
     coder = &ctx->coders[i];
     if (pthread_create(&coder->th, NULL, simulate, coder) != 0)
     {
-      ctx->stop_flag = true;
+      set_stop_flag(ctx);
       wakeup_all_thread(ctx, i);
       break;
     }

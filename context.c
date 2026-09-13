@@ -6,6 +6,11 @@ static int init_shared_context(t_Args *args, t_SharedContext *ctx)
 {
 	if(pthread_cond_init(&ctx->cond, NULL) != 0)
       return -1;
+  if (pthread_mutex_init(&ctx->lock, NULL) != 0)
+  {
+    pthread_cond_destroy(&ctx->cond);
+    return -1;
+  }
   ctx->coder = args->coder;
   ctx->burnout = args->burnout;
   ctx->compile = args->compile;
