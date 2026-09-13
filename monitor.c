@@ -77,13 +77,14 @@ static bool check_single_coder_burnout(t_Coder *coder, t_Monitor *mon)
   if (last_t + ctx-> burnout + 2 < mon->w_time)
     mon->w_time = last_t + ctx-> burnout + 2;
   now_t = get_time_in_ms();
-  printf("last_compile_time:%lld\n", last_t);
+  // printf("last_compile_time:%lld\n", last_t);
   if ((now_t - last_t) > ctx->burnout)
   {
-    printf("経過時間:%lld\n", (now_t - last_t));
+    output_log(ctx, coder->id, "burned out");
+    // printf("経過時間:%lld\n", (now_t - last_t));
     set_stop_flag(ctx);
     wakeup_all_thread(ctx, ctx->coder);
-    printf("coder:%d のプログラムは燃え尽きた\n", coder->id);
+    // printf("coder:%d のプログラムは燃え尽きた\n", coder->id);
     return true;
   }
   return false;

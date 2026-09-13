@@ -75,6 +75,7 @@ struct s_SharedContext
 	t_Coder		      *coders;
   t_Monitor       *mon;
   long long       next_seq;
+  long long       start_time_ms;
 	pthread_mutex_t lock;
 	pthread_mutex_t log_lock;
   pthread_cond_t  cond;
@@ -148,6 +149,7 @@ void  wakeup_all_thread(t_SharedContext *shared_ctx, int coder);
 void  free_dongle_heap(t_Dongle *d);
 void  set_stop_flag(t_SharedContext *ctx);
 void  update_last_compile_time(t_Coder *coder);
+void output_log(t_SharedContext *ctx, int id, const char* message);
 long long get_time_in_ms(void);
 struct timespec wakeup_time(t_Coder *coder);
 struct timespec ms_to_timespec(long long ms);

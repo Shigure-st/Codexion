@@ -7,14 +7,25 @@
 #include <sys/time.h>
 
 
+void output_log(t_SharedContext *ctx, int id, const char* message)
+{
+  long long elapsed;
+
+  pthread_mutex_lock(&ctx->log_lock);
+  elapsed = get_time_in_ms() - ctx->start_time_ms;
+  printf("%lld %d %s\n", elapsed, id, message);
+  pthread_mutex_unlock(&ctx->log_lock);
+}
+
 int	is_debug(t_Coder *coder)
 {
   long  total_usec;
   long  remainder_usec;
-  long   time;
+  // long   time;
 
+  output_log(coder->ctx, coder->id, "is debugging");
   gettimeofday(&coder->tv, NULL);
-  time = coder->tv.tv_sec;
+  // time = coder->tv.tv_sec;
   total_usec = coder->tv.tv_usec + (coder->ctx->debug * 1000);
   coder->ts.tv_sec = coder->tv.tv_sec + (total_usec / 1000000);
   remainder_usec = total_usec % 1000000;
@@ -25,7 +36,7 @@ int	is_debug(t_Coder *coder)
   pthread_mutex_unlock(&coder->lock);
   if (is_stopped(coder->ctx))
     return -1;
-  printf("デバックにかかった秒数:%ld\n", ((long)coder->ts.tv_sec - time));
+  // printf("デバックにかかった秒数:%ld\n", ((long)coder->ts.tv_sec - time));
   return 0;
 }
 
@@ -33,10 +44,11 @@ int	is_refactor(t_Coder *coder)
 {
   long  total_usec;
   long  remainder_usec;
-  long   time;
+  // long   time;
 
+  output_log(coder->ctx, coder->id, "is refactoring");
   gettimeofday(&coder->tv, NULL);
-  time = coder->tv.tv_sec;
+  // time = coder->tv.tv_sec;
   total_usec = coder->tv.tv_usec + (coder->ctx->refactor * 1000);
   coder->ts.tv_sec = coder->tv.tv_sec + (total_usec / 1000000);
   remainder_usec = total_usec % 1000000;
@@ -47,7 +59,7 @@ int	is_refactor(t_Coder *coder)
   pthread_mutex_unlock(&coder->lock);
   if (is_stopped(coder->ctx))
     return -1;
-  printf("リファクタリングにかかった秒数:%ld\n", ((long)coder->ts.tv_sec - time));
+  // printf("リファクタリングにかかった秒数:%ld\n", ((long)coder->ts.tv_sec - time));
   return 0;
 }
 
@@ -56,6 +68,7 @@ int	is_compile(t_Coder *coder)
   long  total_usec;
   long  remainder_usec;
 
+  output_log(coder->ctx, coder->id, "is compiling");
   update_last_compile_time(coder);
 
   gettimeofday(&coder->tv, NULL);
@@ -71,7 +84,7 @@ int	is_compile(t_Coder *coder)
   pthread_mutex_unlock(&coder->lock);
   pthread_mutex_lock(&(coder->r_dongle->lock));
   pthread_mutex_lock(&(coder->l_dongle->lock));
-  printf("[DEBUG] coder compile coder:%d\n", coder->id);
+  // printf("[DEBUG] coder compile coder:%d\n", coder->id);
   coder->r_dongle->t_end = get_time_in_ms() + coder->ctx->cooldown;
   coder->l_dongle->t_end = get_time_in_ms() + coder->ctx->cooldown;
   (coder->r_dongle->free) = true;
@@ -102,6 +115,8 @@ void acquire_dongles(t_Coder *coder)
     coder->l_dongle->free = false;
     pthread_mutex_unlock(&(coder->r_dongle->lock));
     pthread_mutex_unlock(&(coder->l_dongle->lock));
+    output_log(coder->ctx, coder->id, "has taken a dongle");
+    output_log(coder->ctx, coder->id, "has taken a dongle");
   }
   else
   {

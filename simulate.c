@@ -19,6 +19,7 @@ int run_simulation(t_SharedContext *ctx)
   int j;
   t_Coder *coder;
 
+  ctx->start_time_ms = get_time_in_ms();
   i = 0;
   if (pthread_create(&ctx->mon->th, NULL, check_burnout, ctx->mon) != 0)
     return -1;

@@ -43,6 +43,8 @@ bool try_to_acquire(t_Coder *coder)
     heap_pop(coder->l_dongle);
     coder->r_dongle->free = false;
     coder->l_dongle->free = false;
+    output_log(coder->ctx, coder->id, "has taken a dongle");
+    output_log(coder->ctx, coder->id, "has taken a dongle");
   }
   pthread_mutex_unlock(&(coder->r_dongle->lock));
   pthread_mutex_unlock(&(coder->l_dongle->lock));

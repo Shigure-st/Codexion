@@ -108,10 +108,10 @@ void	*simulate(void* arg)
   {
     if (coder_cycle(coder))
         break;
-    printf("Coder:%d compile number:%d\n", coder->id, i + 1);
+    // printf("Coder:%d compile number:%d\n", coder->id, i + 1);
     i++;
   }
-  printf("compile complete\n");
+  // printf("compile complete\n");
   coder->done = true;
   if (check_complete(coder->ctx))
     wakeup_all_thread(coder->ctx, coder->ctx->coder);

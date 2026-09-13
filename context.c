@@ -3,7 +3,7 @@
 #include "codexion.h"
 
 
-static int init_cond_mutex(t_Args *args, t_SharedContext *ctx)
+static int init_cond_mutex(t_SharedContext *ctx)
 {
   ctx->is_cond = false;
   ctx->is_lock = false;
@@ -37,7 +37,7 @@ static void init_share_value(t_Args *args, t_SharedContext *ctx)
 }
 static int init_shared_context(t_Args *args, t_SharedContext *ctx)
 {
-  if (init_cond_mutex(args, ctx) != 0)
+  if (init_cond_mutex(ctx) != 0)
     return -1;
   init_share_value(args, ctx);
   return 0;
