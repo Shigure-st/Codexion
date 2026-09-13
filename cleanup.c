@@ -23,6 +23,7 @@ static void cleanup_monitor(t_SharedContext *ctx)
   if (ctx->mon != NULL)
   {
     pthread_mutex_destroy(&ctx->mon->lock);
+    pthread_cond_destroy(&ctx->mon->cond);
     free(ctx->mon);
     ctx->mon = NULL;
   }

@@ -108,8 +108,9 @@ struct s_Coder
 struct s_Monitor
 {
 	pthread_t	      th;
+  long long       w_time;
+  pthread_cond_t  cond;
   pthread_mutex_t lock;
-  struct timeval  tv;
 	t_SharedContext	*ctx;
 };
 
@@ -145,5 +146,6 @@ void  set_stop_flag(t_SharedContext *ctx);
 void  update_last_compile_time(t_Coder *coder);
 long long get_time_in_ms(void);
 struct timespec wakeup_time(t_Coder *coder);
+struct timespec ms_to_timespec(long long ms);
 
 #endif
