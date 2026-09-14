@@ -37,3 +37,19 @@ void	output_log(t_SharedContext *ctx, int id, const char *message)
 	printf("%lld %d %s\n", elapsed, id, message);
 	pthread_mutex_unlock(&ctx->log_lock);
 }
+
+bool	is_expired(t_Coder *coder)
+{
+	struct timeval	now_tv;
+	long long		now_nsec;
+
+	gettimeofday(&now_tv, NULL);
+	now_nsec = now_tv.tv_usec * 1000;
+	if (now_tv.tv_sec > coder->ts.tv_sec)
+		return (true);
+	if (now_tv.tv_sec < coder->ts.tv_sec)
+		return (false);
+	if (now_nsec >= coder->ts.tv_nsec)
+		return (true);
+	return (false);
+}

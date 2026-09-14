@@ -41,7 +41,7 @@ void	wait_for_dongles(t_Coder *coder)
 	if (!is_empty_and_free(coder->l_dongle))
 		heap_push(coder->l_dongle, coder);
 	pthread_mutex_lock(&(coder->lock));
-	while (!acquire)
+	while (!acquire && !is_stopped(coder->ctx))
 	{
 		wakeup = wakeup_time(coder);
 		pthread_cond_timedwait(&(coder->cond), &(coder->lock), &wakeup);

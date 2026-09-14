@@ -124,6 +124,7 @@ bool			check_complete(t_SharedContext *shared_ctx);
 bool			is_stopped(t_SharedContext *ctx);
 bool			update_last_compile_time(t_Coder *coder);
 bool			handle_single_coder(t_Coder *coder);
+bool			is_expired(t_Coder *coder);
 void			*check_burnout(void *arg);
 void			*simulate(void *arg);
 void			heap_push(t_Dongle *dongle, t_Coder *coder);

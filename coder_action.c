@@ -9,7 +9,8 @@ int	is_compile(t_Coder *coder)
 	output_log(coder->ctx, coder->id, "is compiling");
 	set_coder_sleep(coder, coder->ctx->compile);
 	pthread_mutex_lock(&(coder->lock));
-	pthread_cond_timedwait(&coder->cond, &coder->lock, &coder->ts);
+	while (!is_expired(coder) && !is_stopped(coder->ctx))
+		pthread_cond_timedwait(&coder->cond, &coder->lock, &coder->ts);
 	pthread_mutex_unlock(&(coder->lock));
 	release_dongles(coder);
 	if (is_stopped(coder->ctx))
@@ -22,7 +23,8 @@ int	is_debug(t_Coder *coder)
 	output_log(coder->ctx, coder->id, "is debugging");
 	set_coder_sleep(coder, coder->ctx->debug);
 	pthread_mutex_lock(&(coder->lock));
-	pthread_cond_timedwait(&coder->cond, &coder->lock, &coder->ts);
+	while (!is_expired(coder) && !is_stopped(coder->ctx))
+		pthread_cond_timedwait(&coder->cond, &coder->lock, &coder->ts);
 	pthread_mutex_unlock(&(coder->lock));
 	if (is_stopped(coder->ctx))
 		return (-1);
@@ -34,7 +36,8 @@ int	is_refactor(t_Coder *coder)
 	output_log(coder->ctx, coder->id, "is refactoring");
 	set_coder_sleep(coder, coder->ctx->refactor);
 	pthread_mutex_lock(&(coder->lock));
-	pthread_cond_timedwait(&coder->cond, &coder->lock, &coder->ts);
+	while (!is_expired(coder) && !is_stopped(coder->ctx))
+		pthread_cond_timedwait(&coder->cond, &coder->lock, &coder->ts);
 	pthread_mutex_unlock(&(coder->lock));
 	if (is_stopped(coder->ctx))
 		return (-1);
