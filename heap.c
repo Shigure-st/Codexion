@@ -24,10 +24,7 @@ int	heap_pop(t_Dongle *dongle)
 
 	queue = dongle->waiters;
 	if (queue->size == 0)
-	{
-		printf("queue is emptyh\n");
 		return (-1);
-	}
 	queue->size--;
 	queue->data[0] = queue->data[queue->size];
 	shift_down(queue);

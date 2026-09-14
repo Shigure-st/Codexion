@@ -18,6 +18,5 @@ int	main(int argc, char **argv)
 	}
 	run_simulation(&ctx);
 	cleanup_context(&ctx);
-	printf("argc:%d, argv:%s\n", argc, argv[1]);
 	return (0);
 }

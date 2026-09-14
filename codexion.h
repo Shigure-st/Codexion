@@ -10,7 +10,6 @@ typedef struct s_SharedContext	t_SharedContext;
 typedef struct s_Coder			t_Coder;
 typedef struct s_Dongle			t_Dongle;
 typedef struct s_Monitor		t_Monitor;
-typedef struct s_Data			t_Data;
 typedef struct s_Heap			t_Heap;
 typedef struct s_HeapData		t_HeapData;
 
@@ -37,21 +36,6 @@ struct s_HeapData
 {
 	t_Coder		*coder;
 	long long	priority;
-};
-
-struct s_Queue
-{
-	int				tail;
-	int				head;
-	int				size;
-	t_Data			*arr;
-	pthread_cond_t	not_empty;
-};
-
-struct s_Data
-{
-	int		priority;
-	t_Coder	*coder;
 };
 
 struct s_SharedContext
@@ -142,7 +126,6 @@ bool			update_last_compile_time(t_Coder *coder);
 bool			handle_single_coder(t_Coder *coder);
 void			*check_burnout(void *arg);
 void			*simulate(void *arg);
-void			free_heapqueue(t_SharedContext *shared_ctx);
 void			heap_push(t_Dongle *dongle, t_Coder *coder);
 void			acquire_dongles(t_Coder *coder);
 void			wakeup_all_thread(t_SharedContext *shared_ctx, int coder);

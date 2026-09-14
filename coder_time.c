@@ -3,14 +3,6 @@
 #include <sys/time.h>
 #include "codexion.h"
 
-long long	get_cooldown_time(t_Dongle *right, t_Dongle *left)
-{
-	if (right->t_end >= left->t_end)
-		return (right->t_end);
-	else
-		return (left->t_end);
-}
-
 struct timespec	wakeup_time(t_Coder *coder)
 {
 	long long	now;
