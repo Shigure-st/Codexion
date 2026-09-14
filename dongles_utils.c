@@ -1,0 +1,51 @@
+#include <stdbool.h>
+#include <pthread.h>
+#include "codexion.h"
+
+void	take_dongles(t_Coder *coder)
+{
+	pthread_mutex_lock(&(coder->r_dongle->lock));
+	pthread_mutex_lock(&(coder->l_dongle->lock));
+	coder->r_dongle->free = false;
+	coder->l_dongle->free = false;
+	pthread_mutex_unlock(&(coder->r_dongle->lock));
+	pthread_mutex_unlock(&(coder->l_dongle->lock));
+	output_log(coder->ctx, coder->id, "has taken a dongle");
+	output_log(coder->ctx, coder->id, "has taken a dongle");
+}
+
+void	release_dongles(t_Coder *coder)
+{
+	pthread_mutex_lock(&(coder->r_dongle->lock));
+	pthread_mutex_lock(&(coder->l_dongle->lock));
+	coder->r_dongle->t_end = get_time_in_ms() + coder->ctx->cooldown;
+	coder->l_dongle->t_end = get_time_in_ms() + coder->ctx->cooldown;
+	(coder->r_dongle->free) = true;
+	(coder->l_dongle->free) = true;
+	if (coder->r_dongle->cond != NULL)
+		pthread_cond_broadcast(coder->r_dongle->cond);
+	if (coder->l_dongle->cond != NULL)
+		pthread_cond_broadcast(coder->l_dongle->cond);
+	pthread_mutex_unlock(&coder->r_dongle->lock);
+	pthread_mutex_unlock(&coder->l_dongle->lock);
+}
+
+void	wait_for_dongles(t_Coder *coder)
+{
+	struct timespec	wakeup;
+	bool			acquire;
+
+	acquire = false;
+	if (!is_empty_and_free(coder->r_dongle))
+		heap_push(coder->r_dongle, coder);
+	if (!is_empty_and_free(coder->l_dongle))
+		heap_push(coder->l_dongle, coder);
+	pthread_mutex_lock(&(coder->lock));
+	while (!acquire)
+	{
+		wakeup = wakeup_time(coder);
+		pthread_cond_timedwait(&(coder->cond), &(coder->lock), &wakeup);
+		acquire = try_to_acquire(coder);
+	}
+	pthread_mutex_unlock(&(coder->lock));
+}

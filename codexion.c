@@ -14,22 +14,21 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <stdbool.h>
-#include "codexion.h"
 #include <time.h>
 #include <sys/time.h>
+#include "codexion.h"
 
-
-bool  check_complete(t_SharedContext *ctx)
+bool	check_complete(t_SharedContext *ctx)
 {
-  int i;
+	int	i;
 
-  i = 0;
-  while (i < ctx->coder)
-  {
-    if (!ctx->coders[i].done)
-      return false;
-    i++;
-  }
-  set_stop_flag(ctx);
-  return true;
+	i = 0;
+	while (i < ctx->coder)
+	{
+		if (!ctx->coders[i].done)
+			return (false);
+		i++;
+	}
+	set_stop_flag(ctx);
+	return (true);
 }
