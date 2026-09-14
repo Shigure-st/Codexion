@@ -29,6 +29,22 @@ void set_coder_sleep(t_Coder *coder)
   coder->ts.tv_nsec = remainder_usec * 1000;
 }
 
+void release_dongles(t_Coder *coder)
+{
+  pthread_mutex_lock(&(coder->r_dongle->lock));
+  pthread_mutex_lock(&(coder->l_dongle->lock));
+  coder->r_dongle->t_end = get_time_in_ms() + coder->ctx->cooldown;
+  coder->l_dongle->t_end = get_time_in_ms() + coder->ctx->cooldown;
+  (coder->r_dongle->free) = true;
+  (coder->l_dongle->free) = true;
+  if (coder->r_dongle->cond != NULL)
+    pthread_cond_broadcast(coder->r_dongle->cond);
+  if (coder->l_dongle->cond != NULL)
+    pthread_cond_broadcast(coder->l_dongle->cond);
+  pthread_mutex_unlock(&coder->r_dongle->lock);
+  pthread_mutex_unlock(&coder->l_dongle->lock);
+}
+
 int	is_debug(t_Coder *coder)
 {
   output_log(coder->ctx, coder->id, "is debugging");
@@ -58,23 +74,10 @@ int	is_compile(t_Coder *coder)
   output_log(coder->ctx, coder->id, "is compiling");
   update_last_compile_time(coder);
   set_coder_sleep(coder);
-  // pthread_mutex_lock(&(coder->mon->lock));
-  // pthread_mutex_unlock(&(coder->mon->lock));
   pthread_mutex_lock(&(coder->lock));
   pthread_cond_timedwait(&coder->cond, &coder->lock, &coder->ts);
   pthread_mutex_unlock(&coder->lock);
-  pthread_mutex_lock(&(coder->r_dongle->lock));
-  pthread_mutex_lock(&(coder->l_dongle->lock));
-  coder->r_dongle->t_end = get_time_in_ms() + coder->ctx->cooldown;
-  coder->l_dongle->t_end = get_time_in_ms() + coder->ctx->cooldown;
-  (coder->r_dongle->free) = true;
-  (coder->l_dongle->free) = true;
-  pthread_mutex_unlock(&coder->r_dongle->lock);
-  pthread_mutex_unlock(&coder->l_dongle->lock);
-  if (coder->r_dongle->cond != NULL)
-    pthread_cond_broadcast(coder->r_dongle->cond);
-  if (coder->l_dongle->cond != NULL)
-    pthread_cond_broadcast(coder->l_dongle->cond);
+  release_dongles(coder);
   if (is_stopped(coder->ctx))
     return -1;
   return 0;
