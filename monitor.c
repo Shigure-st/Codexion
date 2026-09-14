@@ -45,11 +45,20 @@ int alloc_monitor(t_SharedContext *ctx)
   return 0;
 }
 
-void update_last_compile_time(t_Coder *coder)
+bool update_last_compile_time(t_Coder *coder)
 {
+  long long t;
+
+  t = get_time_in_ms();
   pthread_mutex_lock(&(coder->lock));
-  coder->t_last = get_time_in_ms();
+  if (coder->t_last != 0 && t >= coder->t_last + coder->ctx->burnout)
+  {
+    pthread_mutex_unlock(&(coder->lock));
+    return true;
+  }
+  coder->t_last = t;
   pthread_mutex_unlock(&(coder->lock));
+  return false;
 }
 
 long long get_last_compile_time(t_Coder *coder)
@@ -74,17 +83,13 @@ static bool check_single_coder_burnout(t_Coder *coder, t_Monitor *mon)
   if (last_t == 0)
     return false;
   ctx = mon->ctx;
-  if (last_t + ctx-> burnout + 2 < mon->w_time)
-    mon->w_time = last_t + ctx-> burnout + 2;
+  if (last_t + ctx-> burnout < mon->w_time)
+    mon->w_time = last_t + ctx-> burnout;
   now_t = get_time_in_ms();
-  // printf("last_compile_time:%lld\n", last_t);
-  if ((now_t - last_t) > ctx->burnout)
+  if ((now_t - last_t) >= ctx->burnout)
   {
     output_log(ctx, coder->id, "burned out");
-    // printf("経過時間:%lld\n", (now_t - last_t));
-    set_stop_flag(ctx);
     wakeup_all_thread(ctx, ctx->coder);
-    // printf("coder:%d のプログラムは燃え尽きた\n", coder->id);
     return true;
   }
   return false;

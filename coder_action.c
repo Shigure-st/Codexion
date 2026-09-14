@@ -5,6 +5,7 @@
 #include "codexion.h"
 #include <time.h>
 #include <sys/time.h>
+#include <string.h>
 
 
 void output_log(t_SharedContext *ctx, int id, const char* message)
@@ -12,18 +13,25 @@ void output_log(t_SharedContext *ctx, int id, const char* message)
   long long elapsed;
 
   pthread_mutex_lock(&ctx->log_lock);
+  if(strcmp(message, "burned out") == 0)
+    set_stop_flag(ctx);
+  else if(is_stopped(ctx))
+  {
+    pthread_mutex_unlock(&ctx->log_lock);
+    return;
+  }
   elapsed = get_time_in_ms() - ctx->start_time_ms;
   printf("%lld %d %s\n", elapsed, id, message);
   pthread_mutex_unlock(&ctx->log_lock);
 }
 
-void set_coder_sleep(t_Coder *coder)
+void set_coder_sleep(t_Coder *coder, int wait_ms)
 {
   long  total_usec;
   long  remainder_usec;
 
   gettimeofday(&coder->tv, NULL);
-  total_usec = coder->tv.tv_usec + (coder->ctx->debug * 1000);
+  total_usec = coder->tv.tv_usec + (wait_ms * 1000);
   coder->ts.tv_sec = coder->tv.tv_sec + (total_usec / 1000000);
   remainder_usec = total_usec % 1000000;
   coder->ts.tv_nsec = remainder_usec * 1000;
@@ -48,7 +56,7 @@ void release_dongles(t_Coder *coder)
 int	is_debug(t_Coder *coder)
 {
   output_log(coder->ctx, coder->id, "is debugging");
-  set_coder_sleep(coder);
+  set_coder_sleep(coder, coder->ctx->debug);
   pthread_mutex_lock(&(coder->lock));
   pthread_cond_timedwait(&coder->cond, &coder->lock, &coder->ts);
   pthread_mutex_unlock(&coder->lock);
@@ -60,7 +68,7 @@ int	is_debug(t_Coder *coder)
 int	is_refactor(t_Coder *coder)
 {
   output_log(coder->ctx, coder->id, "is refactoring");
-  set_coder_sleep(coder);
+  set_coder_sleep(coder, coder->ctx->refactor);
   pthread_mutex_lock(&(coder->lock));
   pthread_cond_timedwait(&coder->cond, &coder->lock, &coder->ts);
   pthread_mutex_unlock(&coder->lock);
@@ -71,9 +79,10 @@ int	is_refactor(t_Coder *coder)
 
 int	is_compile(t_Coder *coder)
 {
+  if (update_last_compile_time(coder))
+    return -1;
   output_log(coder->ctx, coder->id, "is compiling");
-  update_last_compile_time(coder);
-  set_coder_sleep(coder);
+  set_coder_sleep(coder, coder->ctx->compile);
   pthread_mutex_lock(&(coder->lock));
   pthread_cond_timedwait(&coder->cond, &coder->lock, &coder->ts);
   pthread_mutex_unlock(&coder->lock);
@@ -83,38 +92,44 @@ int	is_compile(t_Coder *coder)
   return 0;
 }
 
-void acquire_dongles(t_Coder *coder)
+void take_dongles(t_Coder *coder)
+{
+  pthread_mutex_lock(&(coder->r_dongle->lock));
+  pthread_mutex_lock(&(coder->l_dongle->lock));
+  coder->r_dongle->free = false;
+  coder->l_dongle->free = false;
+  pthread_mutex_unlock(&(coder->r_dongle->lock));
+  pthread_mutex_unlock(&(coder->l_dongle->lock));
+  output_log(coder->ctx, coder->id, "has taken a dongle");
+  output_log(coder->ctx, coder->id, "has taken a dongle");
+
+}
+
+void wait_for_dongles(t_Coder *coder)
 {
   struct timespec wakeup;
   bool acquire;
 
   acquire = false;
-  if (is_empty_and_free(coder->r_dongle)
-      && is_empty_and_free(coder->l_dongle))
+  if (!is_empty_and_free(coder->r_dongle))
+    heap_push(coder->r_dongle, coder);
+  if (!is_empty_and_free(coder->l_dongle))
+    heap_push(coder->l_dongle, coder);
+  pthread_mutex_lock(&(coder->lock));
+  while (!acquire)
   {
-    pthread_mutex_lock(&(coder->r_dongle->lock));
-    pthread_mutex_lock(&(coder->l_dongle->lock));
-    coder->r_dongle->free = false;
-    coder->l_dongle->free = false;
-    pthread_mutex_unlock(&(coder->r_dongle->lock));
-    pthread_mutex_unlock(&(coder->l_dongle->lock));
-    output_log(coder->ctx, coder->id, "has taken a dongle");
-    output_log(coder->ctx, coder->id, "has taken a dongle");
+    wakeup = wakeup_time(coder);
+    pthread_cond_timedwait(&(coder->cond), &(coder->lock), &wakeup);
+    acquire = try_to_acquire(coder);
   }
+  pthread_mutex_unlock(&(coder->lock));
+
+}
+
+void acquire_dongles(t_Coder *coder)
+{
+  if (is_empty_and_free(coder->r_dongle) && is_empty_and_free(coder->l_dongle))
+    take_dongles(coder);
   else
-  {
-    if (!is_empty_and_free(coder->r_dongle))
-      heap_push(coder->r_dongle, coder);
-    if (!is_empty_and_free(coder->l_dongle))
-      heap_push(coder->l_dongle, coder);
-    pthread_mutex_lock(&(coder->lock));
-    while (!acquire)
-    {
-      wakeup = wakeup_time(coder);
-      pthread_cond_timedwait(&(coder->cond), &(coder->lock), &wakeup);
-      acquire = try_to_acquire(coder);
-    }
-    pthread_mutex_unlock(&(coder->lock));
-  }
-  return;
+    wait_for_dongles(coder);
 }

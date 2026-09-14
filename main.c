@@ -12,7 +12,10 @@ int	main(int argc, char **argv)
   if (parse_args(argc, argv, &args) != 0)
     return -1;
   if (init_context(&args, &ctx) != 0)
+  {
+    cleanup_context(&ctx);
     return -1;
+  }
   run_simulation(&ctx);
   cleanup_context(&ctx);
   printf("argc:%d, argv:%s\n", argc, argv[1]);

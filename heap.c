@@ -59,18 +59,6 @@ static void shift_down(t_Heap *queue)
   parent = 0;
   while((parent * 2) + 1 < queue->size)
   {
-    // left_child = (parent * 2) + 1;
-    // right_child = (parent * 2) + 2;
-    //
-    // if (right_child >= queue->size)
-    //   child = left_child;
-    // else
-    // {
-    //   if (queue->data[left_child].data < queue->data[right_child].data)
-    //     child = left_child;
-    //   else
-    //     child = right_child;
-    // }
     child = get_min_child(queue, (parent * 2) + 1, (parent * 2) + 2);
     if (queue->data[parent].priority > queue->data[child].priority)
     {

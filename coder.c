@@ -13,7 +13,6 @@ static void init_coder_struct(t_SharedContext *ctx, int i)
   ctx->coders[i].is_comp = false;
   ctx->coders[i].wait = false;
   ctx->coders[i].l_dongle = &ctx->dongles[i];
-  // ctx->coders[i].boss = ctx->boss;
   ctx->coders[i].mon = ctx->mon;
   ctx->coders[i].done = false;
   ctx->coders[i].t_last = 0;
@@ -88,30 +87,34 @@ int coder_cycle(t_Coder *coder)
 
 }
 
+bool handle_single_coder(t_Coder *coder)
+{
+  if (coder->r_dongle != coder->l_dongle)
+    return false;
+  pthread_mutex_lock(&(coder->lock));
+  while (!is_stopped(coder->ctx))
+    pthread_cond_wait(&(coder->cond), &(coder->lock));
+  pthread_mutex_unlock(&(coder->lock));
+  return true;
+}
+
 void	*simulate(void* arg)
 {
 	t_Coder	*coder;
   int i;
 
 	coder = arg;
-  update_last_compile_time(coder);
-  if (coder->r_dongle == coder->l_dongle)
-  {
-    pthread_mutex_lock(&(coder->lock));
-    while (!is_stopped(coder->ctx))
-      pthread_cond_wait(&(coder->cond), &(coder->lock));
-    pthread_mutex_unlock(&(coder->lock));
+  if (update_last_compile_time(coder))
     return NULL;
-  }
+  if (handle_single_coder(coder))
+    return NULL;
   i = 0;
   while(i < coder->ctx->required)
   {
     if (coder_cycle(coder))
         break;
-    // printf("Coder:%d compile number:%d\n", coder->id, i + 1);
     i++;
   }
-  // printf("compile complete\n");
   coder->done = true;
   if (check_complete(coder->ctx))
     wakeup_all_thread(coder->ctx, coder->ctx->coder);

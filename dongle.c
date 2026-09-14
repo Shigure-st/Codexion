@@ -8,7 +8,9 @@ bool  is_empty_and_free(t_Dongle *dongle)
   bool empty_and_free;
 
   pthread_mutex_lock(&(dongle->lock));
-  empty_and_free = (dongle->free && dongle->waiters->size == 0);
+  empty_and_free = (dongle->free
+                    && dongle->waiters->size == 0
+                    && get_time_in_ms() >= dongle->t_end);
   pthread_mutex_unlock(&(dongle->lock));
   return empty_and_free;
 }
