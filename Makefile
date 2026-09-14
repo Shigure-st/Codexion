@@ -1,7 +1,7 @@
 CC			= cc
 CFLAGS	= -Wall -Wextra -Werror -pthread
 
-TARGET	= Codexion
+NAME	= codexion
 SRCS			=  main.c \
 					 parser.c \
 					 coder.c \
@@ -21,9 +21,9 @@ SRCS			=  main.c \
 
 OBJS		=  $(SRCS:.c=.o)
 
-all: $(TARGET)
+all: $(NAME)
 
-$(TARGET): $(OBJS)
+$(NAME): $(OBJS)
 				$(CC) $(CFLAGS) -o $@ $^
 
 %.o: %.c
@@ -33,7 +33,7 @@ clean:
 				rm -f $(OBJS)
 
 fclean: clean
-				rm -f $(TARGET)
+				rm -f $(NAME)
 
 re: fclean all
 
