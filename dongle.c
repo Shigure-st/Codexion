@@ -32,8 +32,8 @@ bool	try_to_acquire(t_Coder *coder)
 {
 	bool	ok;
 
-	pthread_mutex_lock(&(coder->r_dongle->lock));
-	pthread_mutex_lock(&(coder->l_dongle->lock));
+	pthread_mutex_lock(&(coder->first->lock));
+	pthread_mutex_lock(&(coder->second->lock));
 	ok = (is_ready_to_take(coder->r_dongle, coder)
 			&& is_ready_to_take(coder->l_dongle, coder));
 	if (ok)
@@ -45,8 +45,8 @@ bool	try_to_acquire(t_Coder *coder)
 		output_log(coder->ctx, coder->id, "has taken a dongle");
 		output_log(coder->ctx, coder->id, "has taken a dongle");
 	}
-	pthread_mutex_unlock(&(coder->r_dongle->lock));
-	pthread_mutex_unlock(&(coder->l_dongle->lock));
+	pthread_mutex_unlock(&(coder->first->lock));
+	pthread_mutex_unlock(&(coder->second->lock));
 	return (ok);
 }
 

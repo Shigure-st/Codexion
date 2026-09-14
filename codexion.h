@@ -86,6 +86,8 @@ struct s_Coder
 	pthread_mutex_t	lock;
 	t_Dongle		*r_dongle;
 	t_Dongle		*l_dongle;
+	t_Dongle		*first;
+	t_Dongle		*second;
 	t_Monitor		*mon;
 	t_SharedContext	*ctx;
 	struct timeval	tv;
@@ -139,6 +141,7 @@ void			set_coder_sleep(t_Coder *coder, int wait_ms);
 void			take_dongles(t_Coder *coder);
 void			release_dongles(t_Coder *coder);
 void			wait_for_dongles(t_Coder *coder);
+void			order_by_address(t_Coder *coder);
 long long		get_time_in_ms(void);
 long long		get_last_compile_time(t_Coder *coder);
 struct timespec	wakeup_time(t_Coder *coder);

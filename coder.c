@@ -18,6 +18,7 @@ static void	init_coder_struct(t_SharedContext *ctx, int i)
 		ctx->coders[i].r_dongle = &ctx->dongles[0];
 	else
 		ctx->coders[i].r_dongle = &ctx->dongles[i + 1];
+	order_by_address(&(ctx->coders[i]));
 }
 
 int	init_coder_mutex(t_SharedContext *ctx)
