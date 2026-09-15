@@ -25,7 +25,7 @@ bool	check_complete(t_shared_context *ctx)
 	i = 0;
 	while (i < ctx->coder)
 	{
-		if (!ctx->coders[i].done)
+		if (!is_done(&(ctx->coders[i])))
 			return (false);
 		i++;
 	}

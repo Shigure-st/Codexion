@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   heap.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: tenomoto <tenomoto@student.42tokyo.jp      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/15 12:42:43 by tenomoto          #+#    #+#             */
+/*   Updated: 2026/09/15 12:42:43 by tenomoto         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include <stddef.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -69,9 +81,11 @@ int	alloc_heapqueue(t_shared_context *ctx)
 		d->waiters = malloc(sizeof(t_heap));
 		if (d->waiters == NULL)
 			return (cleanup_context(ctx));
+		memset(d->waiters, 0, sizeof(t_heap));
 		d->waiters->data = malloc(sizeof(t_heap_data) * 2);
 		if (d->waiters->data == NULL)
 			return (cleanup_context(ctx));
+		memset(d->waiters->data, 0, sizeof(t_heap_data) * 2);
 		i++;
 	}
 	return (0);

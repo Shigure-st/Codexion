@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   codexion.h                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: tenomoto <tenomoto@student.42tokyo.jp      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/15 12:44:22 by tenomoto          #+#    #+#             */
+/*   Updated: 2026/09/15 12:44:24 by tenomoto         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef CODEXION_H
 # define CODEXION_H
 
@@ -126,6 +138,7 @@ bool			is_stopped(t_shared_context *ctx);
 bool			update_last_compile_time(t_coder *coder);
 bool			handle_single_coder(t_coder *coder);
 bool			is_expired(t_coder *coder);
+bool			is_done(t_coder *coder);
 void			*check_burnout(void *arg);
 void			*simulate(void *arg);
 void			heap_push(t_dongle *dongle, t_coder *coder);

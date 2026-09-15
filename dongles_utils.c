@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   dongles_utils.c                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: tenomoto <tenomoto@student.42tokyo.jp      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/15 12:42:43 by tenomoto          #+#    #+#             */
+/*   Updated: 2026/09/15 12:42:43 by tenomoto         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include <stdbool.h>
 #include <pthread.h>
 #include "codexion.h"
@@ -32,14 +44,14 @@ void	release_dongles(t_coder *coder)
 {
 	pthread_mutex_lock(&(coder->first->lock));
 	pthread_mutex_lock(&(coder->second->lock));
-	coder->r_dongle->t_end = get_time_in_ms() + coder->ctx->cooldown;
-	coder->l_dongle->t_end = get_time_in_ms() + coder->ctx->cooldown;
-	(coder->r_dongle->free) = true;
-	(coder->l_dongle->free) = true;
-	if (coder->r_dongle->cond != NULL)
-		pthread_cond_broadcast(coder->r_dongle->cond);
-	if (coder->l_dongle->cond != NULL)
-		pthread_cond_broadcast(coder->l_dongle->cond);
+	coder->first->t_end = get_time_in_ms() + coder->ctx->cooldown;
+	coder->second->t_end = get_time_in_ms() + coder->ctx->cooldown;
+	(coder->first->free) = true;
+	(coder->second->free) = true;
+	if (coder->first->cond != NULL)
+		pthread_cond_broadcast(coder->first->cond);
+	if (coder->second->cond != NULL)
+		pthread_cond_broadcast(coder->second->cond);
 	pthread_mutex_unlock(&(coder->first->lock));
 	pthread_mutex_unlock(&(coder->second->lock));
 }

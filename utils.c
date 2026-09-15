@@ -1,8 +1,30 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   utils.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: tenomoto <tenomoto@student.42tokyo.jp      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/15 12:42:46 by tenomoto          #+#    #+#             */
+/*   Updated: 2026/09/15 12:42:46 by tenomoto         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include <pthread.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
 #include "codexion.h"
+
+bool	is_done(t_coder *coder)
+{
+	bool	done;
+
+	pthread_mutex_lock(&(coder->lock));
+	done = coder->done;
+	pthread_mutex_unlock(&(coder->lock));
+	return (done);
+}
 
 bool	is_stopped(t_shared_context *ctx)
 {

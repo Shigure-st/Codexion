@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   coder.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: tenomoto <tenomoto@student.42tokyo.jp      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/15 12:40:15 by tenomoto          #+#    #+#             */
+/*   Updated: 2026/09/15 12:42:36 by tenomoto         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include <stdbool.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -102,7 +114,9 @@ void	*simulate(void *arg)
 			break ;
 		i++;
 	}
+	pthread_mutex_lock(&(coder->lock));
 	coder->done = true;
+	pthread_mutex_unlock(&(coder->lock));
 	if (check_complete(coder->ctx))
 		wakeup_all_thread(coder->ctx, coder->ctx->coder);
 	return (NULL);

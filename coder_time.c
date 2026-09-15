@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   coder_time.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: tenomoto <tenomoto@student.42tokyo.jp      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/15 12:42:37 by tenomoto          #+#    #+#             */
+/*   Updated: 2026/09/15 12:42:37 by tenomoto         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include <pthread.h>
 #include <stdbool.h>
 #include <sys/time.h>
@@ -10,12 +22,16 @@ struct timespec	wakeup_time(t_coder *coder)
 
 	now = get_time_in_ms();
 	target = now + coder->ctx->compile + coder->ctx->cooldown;
+	pthread_mutex_lock(&(coder->first->lock));
+	pthread_mutex_lock(&(coder->second->lock));
 	if (coder->r_dongle->free && coder->r_dongle->t_end > now)
 		target = coder->r_dongle->t_end;
 	if (coder->l_dongle->free
 		&& coder->l_dongle->t_end > now
 		&& coder->l_dongle->t_end < target)
 		target = coder->l_dongle->t_end;
+	pthread_mutex_unlock(&(coder->first->lock));
+	pthread_mutex_unlock(&(coder->second->lock));
 	return (ms_to_timespec(target));
 }
 
