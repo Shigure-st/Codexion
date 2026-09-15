@@ -38,7 +38,8 @@ struct timespec	wakeup_time(t_coder *coder)
 bool	update_last_compile_time(t_coder *coder, long long now)
 {
 	pthread_mutex_lock(&(coder->lock));
-	if (coder->t_last != 0 && now >= coder->t_last + (coder->ctx->burnout * 1000))
+	if (coder->t_last != 0
+		&& now >= coder->t_last + (coder->ctx->burnout * 1000))
 	{
 		pthread_mutex_unlock(&(coder->lock));
 		return (true);

@@ -56,7 +56,6 @@ long long	output_log(t_shared_context *ctx, int id, char *message)
 	}
 	now = get_time_in_usec();
 	elapsed = usec_to_ms(now - ctx->start_time_usec);
-
 	printf("%lld %d %s\n", elapsed, id, message);
 	pthread_mutex_unlock(&ctx->log_lock);
 	return (now);

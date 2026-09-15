@@ -16,7 +16,7 @@
 
 int	is_compile(t_coder *coder)
 {
-	long long now;
+	long long	now;
 
 	pthread_mutex_lock(&(coder->lock));
 	if (coder->t_last != 0
