@@ -4,12 +4,8 @@
 
 static int	init_cond_mutex(t_SharedContext *ctx)
 {
-	ctx->is_cond = false;
 	ctx->is_lock = false;
 	ctx->is_log_lock = false;
-	if (pthread_cond_init(&ctx->cond, NULL) != 0)
-		return (-1);
-	ctx->is_cond = true;
 	if (pthread_mutex_init(&ctx->lock, NULL) != 0)
 		return (-1);
 	ctx->is_lock = true;

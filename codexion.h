@@ -60,7 +60,6 @@ struct s_SharedContext
 	long long		start_time_ms;
 	pthread_mutex_t	lock;
 	pthread_mutex_t	log_lock;
-	pthread_cond_t	cond;
 };
 
 struct s_Dongle
