@@ -5,9 +5,9 @@
 #include <stdbool.h>
 #include "codexion.h"
 
-int	alloc_monitor(t_SharedContext *ctx)
+int	alloc_monitor(t_shared_context *ctx)
 {
-	ctx->mon = malloc(sizeof(t_Monitor));
+	ctx->mon = malloc(sizeof(t_monitor));
 	if (ctx->mon == NULL)
 		return (cleanup_context(ctx));
 	ctx->mon->ctx = ctx;
@@ -27,11 +27,11 @@ int	alloc_monitor(t_SharedContext *ctx)
 	return (0);
 }
 
-static bool	check_single_coder_burnout(t_Coder *coder, t_Monitor *mon)
+static bool	check_single_coder_burnout(t_coder *coder, t_monitor *mon)
 {
-	long long		last_t;
-	long long		now_t;
-	t_SharedContext	*ctx;
+	long long			last_t;
+	long long			now_t;
+	t_shared_context	*ctx;
 
 	if (coder->done)
 		return (false);
@@ -51,7 +51,7 @@ static bool	check_single_coder_burnout(t_Coder *coder, t_Monitor *mon)
 	return (false);
 }
 
-void	monitor_sleep(t_Monitor *mon, long long target_ms)
+void	monitor_sleep(t_monitor *mon, long long target_ms)
 {
 	struct timespec	wakeup;
 
@@ -64,7 +64,7 @@ void	monitor_sleep(t_Monitor *mon, long long target_ms)
 void	*check_burnout(void *arg)
 {
 	int			i;
-	t_Monitor	*mon;
+	t_monitor	*mon;
 	long long	target_ms;
 
 	mon = arg;

@@ -5,7 +5,7 @@
 #include <string.h>
 #include "codexion.h"
 
-void	free_dongle_heap(t_Dongle *d)
+void	free_dongle_heap(t_dongle *d)
 {
 	if (d == NULL || d->waiters == NULL)
 		return ;
@@ -18,9 +18,9 @@ void	free_dongle_heap(t_Dongle *d)
 	d->waiters = NULL;
 }
 
-int	heap_pop(t_Dongle *dongle)
+int	heap_pop(t_dongle *dongle)
 {
-	t_Heap	*queue;
+	t_heap	*queue;
 
 	queue = dongle->waiters;
 	if (queue->size == 0)
@@ -35,9 +35,9 @@ int	heap_pop(t_Dongle *dongle)
 	return (0);
 }
 
-void	heap_push(t_Dongle *dongle, t_Coder *coder)
+void	heap_push(t_dongle *dongle, t_coder *coder)
 {
-	t_Heap		*queue;
+	t_heap		*queue;
 	long long	t;
 
 	pthread_mutex_lock(&(dongle->lock));
@@ -57,19 +57,19 @@ void	heap_push(t_Dongle *dongle, t_Coder *coder)
 	pthread_mutex_unlock(&(dongle->lock));
 }
 
-int	alloc_heapqueue(t_SharedContext *ctx)
+int	alloc_heapqueue(t_shared_context *ctx)
 {
 	int			i;
-	t_Dongle	*d;
+	t_dongle	*d;
 
 	i = 0;
 	while (i < ctx->coder)
 	{
 		d = &ctx->dongles[i];
-		d->waiters = malloc(sizeof(t_Heap));
+		d->waiters = malloc(sizeof(t_heap));
 		if (d->waiters == NULL)
 			return (cleanup_context(ctx));
-		d->waiters->data = malloc(sizeof(t_HeapData) * 2);
+		d->waiters->data = malloc(sizeof(t_heap_data) * 2);
 		if (d->waiters->data == NULL)
 			return (cleanup_context(ctx));
 		i++;

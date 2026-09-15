@@ -6,8 +6,8 @@
 
 int	main(int argc, char **argv)
 {
-	struct s_Args			args;
-	struct s_SharedContext	ctx;
+	struct s_args			args;
+	struct s_shared_context	ctx;
 
 	if (parse_args(argc, argv, &args) != 0)
 		return (-1);
@@ -16,7 +16,11 @@ int	main(int argc, char **argv)
 		cleanup_context(&ctx);
 		return (-1);
 	}
-	run_simulation(&ctx);
+	if (run_simulation(&ctx) != 0)
+	{
+		cleanup_context(&ctx);
+		return (-1);
+	}
 	cleanup_context(&ctx);
 	return (0);
 }

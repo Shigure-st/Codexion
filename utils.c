@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "codexion.h"
 
-bool	is_stopped(t_SharedContext *ctx)
+bool	is_stopped(t_shared_context *ctx)
 {
 	bool	stop;
 
@@ -14,14 +14,14 @@ bool	is_stopped(t_SharedContext *ctx)
 	return (stop);
 }
 
-void	set_stop_flag(t_SharedContext *ctx)
+void	set_stop_flag(t_shared_context *ctx)
 {
 	pthread_mutex_lock(&ctx->lock);
 	ctx->stop_flag = true;
 	pthread_mutex_unlock(&ctx->lock);
 }
 
-void	output_log(t_SharedContext *ctx, int id, const char *message)
+void	output_log(t_shared_context *ctx, int id, const char *message)
 {
 	long long	elapsed;
 
@@ -38,7 +38,7 @@ void	output_log(t_SharedContext *ctx, int id, const char *message)
 	pthread_mutex_unlock(&ctx->log_lock);
 }
 
-bool	is_expired(t_Coder *coder)
+bool	is_expired(t_coder *coder)
 {
 	struct timeval	now_tv;
 	long long		now_nsec;

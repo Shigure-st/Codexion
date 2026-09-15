@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "codexion.h"
 
-static void	init_coder_struct(t_SharedContext *ctx, int i)
+static void	init_coder_struct(t_shared_context *ctx, int i)
 {
 	ctx->coders[i].id = i + 1;
 	ctx->coders[i].ctx = ctx;
@@ -21,7 +21,7 @@ static void	init_coder_struct(t_SharedContext *ctx, int i)
 	order_by_address(&(ctx->coders[i]));
 }
 
-int	init_coder_mutex(t_SharedContext *ctx)
+int	init_coder_mutex(t_shared_context *ctx)
 {
 	int	i;
 	int	j;
@@ -47,13 +47,13 @@ int	init_coder_mutex(t_SharedContext *ctx)
 	return (0);
 }
 
-int	alloc_coder_array(t_SharedContext *ctx)
+int	alloc_coder_array(t_shared_context *ctx)
 {
 	int	i;
 	int	j;
 
 	i = 0;
-	ctx->coders = malloc(sizeof(t_Coder) * ctx->coder);
+	ctx->coders = malloc(sizeof(t_coder) * ctx->coder);
 	if (ctx->coders == NULL)
 		return (cleanup_context(ctx));
 	while (i < ctx->coder)
@@ -73,7 +73,7 @@ int	alloc_coder_array(t_SharedContext *ctx)
 	return (0);
 }
 
-int	coder_cycle(t_Coder *coder)
+int	coder_cycle(t_coder *coder)
 {
 	acquire_dongles(coder);
 	if (is_stopped(coder->ctx) || is_compile(coder) == -1)
@@ -87,7 +87,7 @@ int	coder_cycle(t_Coder *coder)
 
 void	*simulate(void *arg)
 {
-	t_Coder	*coder;
+	t_coder	*coder;
 	int		i;
 
 	coder = arg;

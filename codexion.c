@@ -18,7 +18,7 @@
 #include <sys/time.h>
 #include "codexion.h"
 
-bool	check_complete(t_SharedContext *ctx)
+bool	check_complete(t_shared_context *ctx)
 {
 	int	i;
 

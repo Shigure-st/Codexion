@@ -1,7 +1,7 @@
 #include "codexion.h"
 #include <stdlib.h>
 
-static void	cleanup_dongles(t_SharedContext *ctx)
+static void	cleanup_dongles(t_shared_context *ctx)
 {
 	int	i;
 
@@ -18,7 +18,7 @@ static void	cleanup_dongles(t_SharedContext *ctx)
 	}
 }
 
-static void	cleanup_monitor(t_SharedContext *ctx)
+static void	cleanup_monitor(t_shared_context *ctx)
 {
 	if (ctx->mon != NULL)
 	{
@@ -29,7 +29,7 @@ static void	cleanup_monitor(t_SharedContext *ctx)
 	}
 }
 
-static void	cleanup_coders(t_SharedContext *ctx)
+static void	cleanup_coders(t_shared_context *ctx)
 {
 	int	i;
 
@@ -47,7 +47,7 @@ static void	cleanup_coders(t_SharedContext *ctx)
 	}
 }
 
-static void	cleanup_heapqueue(t_SharedContext *ctx)
+static void	cleanup_heapqueue(t_shared_context *ctx)
 {
 	int	i;
 
@@ -61,7 +61,7 @@ static void	cleanup_heapqueue(t_SharedContext *ctx)
 	}
 }
 
-int	cleanup_context(t_SharedContext *ctx)
+int	cleanup_context(t_shared_context *ctx)
 {
 	if (ctx == NULL)
 		return (-1);

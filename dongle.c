@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "codexion.h"
 
-bool	is_empty_and_free(t_Dongle *dongle)
+bool	is_empty_and_free(t_dongle *dongle)
 {
 	bool	empty_and_free;
 
@@ -14,7 +14,7 @@ bool	is_empty_and_free(t_Dongle *dongle)
 	return (empty_and_free);
 }
 
-bool	is_ready_to_take(t_Dongle *dongle, t_Coder *coder)
+bool	is_ready_to_take(t_dongle *dongle, t_coder *coder)
 {
 	bool	heap_top;
 	bool	heap_empty;
@@ -28,7 +28,7 @@ bool	is_ready_to_take(t_Dongle *dongle, t_Coder *coder)
 	return (ready);
 }
 
-bool	try_to_acquire(t_Coder *coder)
+bool	try_to_acquire(t_coder *coder)
 {
 	bool	ok;
 
@@ -50,7 +50,7 @@ bool	try_to_acquire(t_Coder *coder)
 	return (ok);
 }
 
-static void	init_value(t_Dongle *dongle)
+static void	init_value(t_dongle *dongle)
 {
 	dongle->free = true;
 	dongle->t_end = 0;
@@ -59,13 +59,13 @@ static void	init_value(t_Dongle *dongle)
 	dongle->waiters = NULL;
 }
 
-int	alloc_dongle_array(t_SharedContext *ctx)
+int	alloc_dongle_array(t_shared_context *ctx)
 {
 	int	i;
 	int	j;
 
 	i = 0;
-	ctx->dongles = malloc(sizeof(t_Dongle) * ctx->coder);
+	ctx->dongles = malloc(sizeof(t_dongle) * ctx->coder);
 	if (ctx->dongles == NULL)
 		return (cleanup_context(ctx));
 	while (i < ctx->coder)

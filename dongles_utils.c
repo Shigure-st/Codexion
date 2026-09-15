@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include "codexion.h"
 
-void	order_by_address(t_Coder *coder)
+void	order_by_address(t_coder *coder)
 {
 	if (coder->r_dongle < coder->l_dongle)
 	{
@@ -16,7 +16,7 @@ void	order_by_address(t_Coder *coder)
 	}
 }
 
-void	take_dongles(t_Coder *coder)
+void	take_dongles(t_coder *coder)
 {
 	pthread_mutex_lock(&(coder->first->lock));
 	pthread_mutex_lock(&(coder->second->lock));
@@ -28,7 +28,7 @@ void	take_dongles(t_Coder *coder)
 	output_log(coder->ctx, coder->id, "has taken a dongle");
 }
 
-void	release_dongles(t_Coder *coder)
+void	release_dongles(t_coder *coder)
 {
 	pthread_mutex_lock(&(coder->first->lock));
 	pthread_mutex_lock(&(coder->second->lock));
@@ -44,7 +44,7 @@ void	release_dongles(t_Coder *coder)
 	pthread_mutex_unlock(&(coder->second->lock));
 }
 
-void	wait_for_dongles(t_Coder *coder)
+void	wait_for_dongles(t_coder *coder)
 {
 	struct timespec	wakeup;
 	bool			acquire;

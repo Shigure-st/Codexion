@@ -50,7 +50,7 @@ int	parse_int(char *arg, int *target)
 	return (0);
 }
 
-int	parse_args(int argc, char **argv, t_Args *args)
+int	parse_args(int argc, char **argv, t_args *args)
 {
 	if (argc != 9)
 		return (fprintf(stderr, "Error:Invalid arguments\n"), -1);

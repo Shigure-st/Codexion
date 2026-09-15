@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include "codexion.h"
 
-int	is_compile(t_Coder *coder)
+int	is_compile(t_coder *coder)
 {
 	if (update_last_compile_time(coder))
 		return (-1);
@@ -18,7 +18,7 @@ int	is_compile(t_Coder *coder)
 	return (0);
 }
 
-int	is_debug(t_Coder *coder)
+int	is_debug(t_coder *coder)
 {
 	output_log(coder->ctx, coder->id, "is debugging");
 	set_coder_sleep(coder, coder->ctx->debug);
@@ -31,7 +31,7 @@ int	is_debug(t_Coder *coder)
 	return (0);
 }
 
-int	is_refactor(t_Coder *coder)
+int	is_refactor(t_coder *coder)
 {
 	output_log(coder->ctx, coder->id, "is refactoring");
 	set_coder_sleep(coder, coder->ctx->refactor);
@@ -44,7 +44,7 @@ int	is_refactor(t_Coder *coder)
 	return (0);
 }
 
-void	acquire_dongles(t_Coder *coder)
+void	acquire_dongles(t_coder *coder)
 {
 	if (is_empty_and_free(coder->r_dongle)
 		&& is_empty_and_free(coder->l_dongle))
@@ -53,7 +53,7 @@ void	acquire_dongles(t_Coder *coder)
 		wait_for_dongles(coder);
 }
 
-bool	handle_single_coder(t_Coder *coder)
+bool	handle_single_coder(t_coder *coder)
 {
 	if (coder->r_dongle != coder->l_dongle)
 		return (false);

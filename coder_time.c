@@ -3,7 +3,7 @@
 #include <sys/time.h>
 #include "codexion.h"
 
-struct timespec	wakeup_time(t_Coder *coder)
+struct timespec	wakeup_time(t_coder *coder)
 {
 	long long	now;
 	long long	target;
@@ -19,7 +19,7 @@ struct timespec	wakeup_time(t_Coder *coder)
 	return (ms_to_timespec(target));
 }
 
-bool	update_last_compile_time(t_Coder *coder)
+bool	update_last_compile_time(t_coder *coder)
 {
 	long long	t;
 
@@ -35,7 +35,7 @@ bool	update_last_compile_time(t_Coder *coder)
 	return (false);
 }
 
-long long	get_last_compile_time(t_Coder *coder)
+long long	get_last_compile_time(t_coder *coder)
 {
 	long long	t;
 
@@ -45,7 +45,7 @@ long long	get_last_compile_time(t_Coder *coder)
 	return (t);
 }
 
-void	set_coder_sleep(t_Coder *coder, int wait_ms)
+void	set_coder_sleep(t_coder *coder, int wait_ms)
 {
 	long	total_usec;
 	long	remainder_usec;

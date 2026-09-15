@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include "codexion.h"
 
-static int	init_cond_mutex(t_SharedContext *ctx)
+static int	init_cond_mutex(t_shared_context *ctx)
 {
 	ctx->is_lock = false;
 	ctx->is_log_lock = false;
@@ -15,7 +15,7 @@ static int	init_cond_mutex(t_SharedContext *ctx)
 	return (0);
 }
 
-static void	init_share_value(t_Args *args, t_SharedContext *ctx)
+static void	init_share_value(t_args *args, t_shared_context *ctx)
 {
 	ctx->coder = args->coder;
 	ctx->burnout = args->burnout;
@@ -32,7 +32,7 @@ static void	init_share_value(t_Args *args, t_SharedContext *ctx)
 	ctx->mon = NULL;
 }
 
-static int	init_shared_context(t_Args *args, t_SharedContext *ctx)
+static int	init_shared_context(t_args *args, t_shared_context *ctx)
 {
 	if (init_cond_mutex(ctx) != 0)
 		return (-1);
@@ -40,7 +40,7 @@ static int	init_shared_context(t_Args *args, t_SharedContext *ctx)
 	return (0);
 }
 
-int	init_context(t_Args *args, t_SharedContext *ctx)
+int	init_context(t_args *args, t_shared_context *ctx)
 {
 	if (init_shared_context(args, ctx) != 0
 		|| alloc_dongle_array(ctx) != 0

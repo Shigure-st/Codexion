@@ -1,10 +1,10 @@
 #include "codexion.h"
 
-void	shift_up(t_Heap *queue)
+void	shift_up(t_heap *queue)
 {
 	int			parent;
 	int			curent;
-	t_HeapData	tmp;
+	t_heap_data	tmp;
 
 	curent = queue->size;
 	parent = (curent - 1) / 2;
@@ -19,7 +19,7 @@ void	shift_up(t_Heap *queue)
 	}
 }
 
-int	get_min_child(t_Heap *queue, int left, int right)
+int	get_min_child(t_heap *queue, int left, int right)
 {
 	if (right >= queue->size)
 		return (left);
@@ -32,11 +32,11 @@ int	get_min_child(t_Heap *queue, int left, int right)
 	}
 }
 
-void	shift_down(t_Heap *queue)
+void	shift_down(t_heap *queue)
 {
 	int			parent;
 	int			child;
-	t_HeapData	tmp;
+	t_heap_data	tmp;
 
 	parent = 0;
 	while ((parent * 2) + 1 < queue->size)
