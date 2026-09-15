@@ -21,7 +21,7 @@ bool	is_empty_and_free(t_dongle *dongle)
 	pthread_mutex_lock(&(dongle->lock));
 	empty_and_free = (dongle->free
 			&& dongle->waiters->size == 0
-			&& get_time_in_ms() >= dongle->t_end);
+			&& get_time_in_usec() >= dongle->t_end);
 	pthread_mutex_unlock(&(dongle->lock));
 	return (empty_and_free);
 }
@@ -35,7 +35,7 @@ bool	is_ready_to_take(t_dongle *dongle, t_coder *coder)
 
 	heap_empty = (dongle->waiters->size == 0);
 	heap_top = (!heap_empty && dongle->waiters->data[0].coder == coder);
-	cooldown_over = (get_time_in_ms() >= dongle->t_end);
+	cooldown_over = (get_time_in_usec() >= dongle->t_end);
 	ready = (dongle->free && cooldown_over && (heap_top || heap_empty));
 	return (ready);
 }

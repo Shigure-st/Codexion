@@ -53,12 +53,12 @@ struct s_heap_data
 struct s_shared_context
 {
 	int				coder;
-	int				burnout;
-	int				debug;
-	int				refactor;
-	int				compile;
+	long long		burnout;
+	long long		debug;
+	long long		refactor;
+	long long		compile;
 	int				required;
-	int				cooldown;
+	long long		cooldown;
 	char			*scheduler;
 	bool			is_active;
 	bool			stop_flag;
@@ -69,7 +69,7 @@ struct s_shared_context
 	t_coder			*coders;
 	t_monitor		*mon;
 	long long		next_seq;
-	long long		start_time_ms;
+	long long		start_time_usec;
 	pthread_mutex_t	lock;
 	pthread_mutex_t	log_lock;
 };
@@ -135,10 +135,10 @@ bool			is_empty_and_free(t_dongle *dongle);
 bool			try_to_acquire(t_coder *coder);
 bool			check_complete(t_shared_context *shared_ctx);
 bool			is_stopped(t_shared_context *ctx);
-bool			update_last_compile_time(t_coder *coder);
 bool			handle_single_coder(t_coder *coder);
 bool			is_expired(t_coder *coder);
 bool			is_done(t_coder *coder);
+bool			update_last_compile_time(t_coder *coder, long long now);
 void			*check_burnout(void *arg);
 void			*simulate(void *arg);
 void			heap_push(t_dongle *dongle, t_coder *coder);
@@ -146,7 +146,10 @@ void			acquire_dongles(t_coder *coder);
 void			wakeup_all_thread(t_shared_context *shared_ctx, int coder);
 void			free_dongle_heap(t_dongle *d);
 void			set_stop_flag(t_shared_context *ctx);
-void			output_log(t_shared_context *ctx, int id, const char *message);
+void			output_burnout_log(
+					t_shared_context *ctx,
+					int id,
+					long long usec);
 void			shift_up(t_heap *queue);
 void			shift_down(t_heap *queue);
 void			set_coder_sleep(t_coder *coder, int wait_ms);
@@ -154,9 +157,11 @@ void			take_dongles(t_coder *coder);
 void			release_dongles(t_coder *coder);
 void			wait_for_dongles(t_coder *coder);
 void			order_by_address(t_coder *coder);
-long long		get_time_in_ms(void);
+long long		output_log(t_shared_context *ctx, int id, char *message);
+long long		get_time_in_usec(void);
+long long		usec_to_ms(long long usec);
 long long		get_last_compile_time(t_coder *coder);
 struct timespec	wakeup_time(t_coder *coder);
-struct timespec	ms_to_timespec(long long ms);
+struct timespec	usec_to_timespec(long long usec);
 
 #endif

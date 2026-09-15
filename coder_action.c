@@ -16,9 +16,19 @@
 
 int	is_compile(t_coder *coder)
 {
-	if (update_last_compile_time(coder))
+	long long now;
+
+	pthread_mutex_lock(&(coder->lock));
+	if (coder->t_last != 0
+		&& get_time_in_usec() >= coder->t_last + (coder->ctx->burnout * 1000))
+	{
+		pthread_mutex_unlock(&(coder->lock));
 		return (-1);
-	output_log(coder->ctx, coder->id, "is compiling");
+	}
+	pthread_mutex_unlock(&(coder->lock));
+	now = output_log(coder->ctx, coder->id, "is compiling");
+	if (now == -1 || update_last_compile_time(coder, now))
+		return (-1);
 	set_coder_sleep(coder, coder->ctx->compile);
 	pthread_mutex_lock(&(coder->lock));
 	while (!is_expired(coder) && !is_stopped(coder->ctx))

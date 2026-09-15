@@ -20,8 +20,8 @@ struct timespec	wakeup_time(t_coder *coder)
 	long long	now;
 	long long	target;
 
-	now = get_time_in_ms();
-	target = now + coder->ctx->compile + coder->ctx->cooldown;
+	now = get_time_in_usec();
+	target = now + (coder->ctx->compile + coder->ctx->cooldown) * 1000;
 	pthread_mutex_lock(&(coder->first->lock));
 	pthread_mutex_lock(&(coder->second->lock));
 	if (coder->r_dongle->free && coder->r_dongle->t_end > now)
@@ -32,21 +32,18 @@ struct timespec	wakeup_time(t_coder *coder)
 		target = coder->l_dongle->t_end;
 	pthread_mutex_unlock(&(coder->first->lock));
 	pthread_mutex_unlock(&(coder->second->lock));
-	return (ms_to_timespec(target));
+	return (usec_to_timespec(target));
 }
 
-bool	update_last_compile_time(t_coder *coder)
+bool	update_last_compile_time(t_coder *coder, long long now)
 {
-	long long	t;
-
-	t = get_time_in_ms();
 	pthread_mutex_lock(&(coder->lock));
-	if (coder->t_last != 0 && t >= coder->t_last + coder->ctx->burnout)
+	if (coder->t_last != 0 && now >= coder->t_last + (coder->ctx->burnout * 1000))
 	{
 		pthread_mutex_unlock(&(coder->lock));
 		return (true);
 	}
-	coder->t_last = t;
+	coder->t_last = now;
 	pthread_mutex_unlock(&(coder->lock));
 	return (false);
 }

@@ -43,21 +43,23 @@ void	set_stop_flag(t_shared_context *ctx)
 	pthread_mutex_unlock(&ctx->lock);
 }
 
-void	output_log(t_shared_context *ctx, int id, const char *message)
+long long	output_log(t_shared_context *ctx, int id, char *message)
 {
+	long long	now;
 	long long	elapsed;
 
 	pthread_mutex_lock(&ctx->log_lock);
-	if (strcmp(message, "burned out") == 0)
-		set_stop_flag(ctx);
-	else if (is_stopped(ctx))
+	if (is_stopped(ctx))
 	{
 		pthread_mutex_unlock(&ctx->log_lock);
-		return ;
+		return (-1);
 	}
-	elapsed = get_time_in_ms() - ctx->start_time_ms;
+	now = get_time_in_usec();
+	elapsed = usec_to_ms(now - ctx->start_time_usec);
+
 	printf("%lld %d %s\n", elapsed, id, message);
 	pthread_mutex_unlock(&ctx->log_lock);
+	return (now);
 }
 
 bool	is_expired(t_coder *coder)

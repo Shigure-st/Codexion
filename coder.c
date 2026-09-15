@@ -103,7 +103,7 @@ void	*simulate(void *arg)
 	int		i;
 
 	coder = arg;
-	if (update_last_compile_time(coder))
+	if (update_last_compile_time(coder, get_time_in_usec()))
 		return (NULL);
 	if (handle_single_coder(coder))
 		return (NULL);

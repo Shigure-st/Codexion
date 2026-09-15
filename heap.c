@@ -60,7 +60,7 @@ void	heap_push(t_dongle *dongle, t_coder *coder)
 	else
 	{
 		t = get_last_compile_time(coder);
-		queue->data[queue->size].priority = t + coder->ctx->burnout;
+		queue->data[queue->size].priority = t + (coder->ctx->burnout * 1000);
 	}
 	shift_up(queue);
 	queue->size++;

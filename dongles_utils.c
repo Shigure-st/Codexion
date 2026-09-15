@@ -44,8 +44,8 @@ void	release_dongles(t_coder *coder)
 {
 	pthread_mutex_lock(&(coder->first->lock));
 	pthread_mutex_lock(&(coder->second->lock));
-	coder->first->t_end = get_time_in_ms() + coder->ctx->cooldown;
-	coder->second->t_end = get_time_in_ms() + coder->ctx->cooldown;
+	coder->first->t_end = get_time_in_usec() + (coder->ctx->cooldown * 1000);
+	coder->second->t_end = get_time_in_usec() + (coder->ctx->cooldown * 1000);
 	(coder->first->free) = true;
 	(coder->second->free) = true;
 	if (coder->first->cond != NULL)

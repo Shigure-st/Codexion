@@ -61,7 +61,7 @@ int	run_simulation(t_shared_context *ctx)
 {
 	int	started_count;
 
-	ctx->start_time_ms = get_time_in_ms();
+	ctx->start_time_usec = get_time_in_usec();
 	if (pthread_create(&ctx->mon->th, NULL, check_burnout, ctx->mon) != 0)
 		return (-1);
 	started_count = start_coders(ctx);
